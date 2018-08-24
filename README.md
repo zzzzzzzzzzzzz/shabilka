@@ -19,4 +19,17 @@ MVP — программка, которая крутится в фоне, ум�
 Coming soon...
 
 ### Как пользоваться?
+1. `git clone git@bitbucket.org:parrot1/print-service.git`
+2. Сделайте virtualenv для 3-его питона: `python3 -m venv env/`
+3. `pip install -r requirements.txt`
+4. Ставим браузер google-chrome и chromedriver
+    * `sudo apt-get install google-chrome`
+    * `wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip`
+    * `unzip chromedriver_linux64.zip`
+    * Копируете драйвер в папку с проектом `mv chromedriver MyEnv/other/shabilka/`
+    * Если использовали нестандартный путь, то меняете соответственно файлик src/local_config.py
+5. ...
+
+*P.S. Думал использовать phantomJS, но по какой-то причине он не грузит формы. Может быть надо ещё что-то доставлять*
+
 Coming soon...

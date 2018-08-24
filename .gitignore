@@ -166,4 +166,6 @@ pyvenv.cfg
 pip-selfcheck.json
 env/
 .idea/
-
+phantomjs/
+logs/
+chromedriver
