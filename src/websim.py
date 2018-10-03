@@ -31,6 +31,11 @@ class Alpha(object):
 
     LOOKBACKS = ['25', '50', '128', '256', '384', '512']
 
+    alpha_stats = ['year', 'booksize', 'long_count', 'short_count', 'pnl', 'sharpe', 'fitness',
+                   'returns', 'draw_down', 'turn_over', 'margin']
+
+    stats = {}
+
     def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text):
         assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
         assert isinstance(universe, str), 'Universe of the alpha must be simple string HUUUMAN'
@@ -79,10 +84,6 @@ class Alpha(object):
                 Alpha.LOOKBACKS)))
 
 
-alpha_stats = ['alpha', 'year', 'long_count', 'short_count', 'pnl', 'sharpe', 'fitness',
-               'returns', 'draw_down', 'turn_over', 'margin']
-
-
 class WebSim(object):
     def __init__(self, implicitly_wait=60):
 
@@ -129,102 +130,124 @@ class WebSim(object):
             return False
             # find dashboard element
 
-    def stats(self, i, alpha):
+    def _get_stats(self):
         table = self.driver.find_elements_by_class_name('standard-row')
+        stats = []
         for row_id, row in enumerate(table):
             data = row.find_elements_by_tag_name('td')
-            self.res_df.alpha.iloc[i * 7 + row_id] = alpha
-            self.res_df.year.iloc[i * 7 + row_id] = data[1].text
-            self.res_df.long_count.iloc[i * 7 + row_id] = data[3].text
-            self.res_df.short_count.iloc[i * 7 + row_id] = data[4].text
-            self.res_df.pnl.iloc[i * 7 + row_id] = data[5].text
-            self.res_df.sharpe.iloc[i * 7 + row_id] = data[6].text
-            self.res_df.fitness.iloc[i * 7 + row_id] = data[7].text
-            self.res_df.returns.iloc[i * 7 + row_id] = data[8].text
-            self.res_df.draw_down.iloc[i * 7 + row_id] = data[9].text
-            self.res_df.turn_over.iloc[i * 7 + row_id] = data[10].text
-            self.res_df.margin.iloc[i * 7 + row_id] = data[11].text
+            stats.append(
+                {
+                    'year': data[1].text,
+                    'booksize': data[2].text,
+                    'long_count': data[3].text,
+                    'short_count': data[4].text,
+                    'pnl': data[5].text,
+                    'sharpe': data[6].text,
+                    'fitness': data[7].text,
+                    'returns': data[8].text,
+                    'draw_down': data[9].text,
+                    'turn_over': data[10].text,
+                    'margin': data[11].text
+                }
+            )
+        return stats
 
-    # TODO: сделать метод для симуляции одной альфы
     def simulate_alpha(self, alpha):
         assert isinstance(alpha, Alpha), 'Alpha must be Alpha class instance'
-        self.driver.get('https://websim.worldquantchallenge.com/simulate')
-        input_form = self.driver.find_element_by_class_name('CodeMirror-line')
-        settings_button = self.driver.find_element_by_class_name('test-settingslink')
-        region_value = self.driver.find_element_by_xpath(
-            "//select[@name='region']/option[text()='{}']".format(alpha.region))
-        universe_value = self.driver.find_element_by_xpath(
-            "//select[@name='univid']/option[text()='{}']".format(alpha.universe))
-        delay_value = self.driver.find_element_by_xpath(
-            "//select[@name='delay']/option[text()='{}']".format(alpha.delay))
-        neutralization_value = self.driver.find_element_by_xpath(
-            "//select[@name='opneut']/option[text()='{}']".format(alpha.neutralization))
-        backdays_hidden_value = self.driver.find_element_by_name('backdays')
-        decay_input = self.driver.find_element_by_name('decay')
-        max_stock_weight_input = self.driver.find_element_by_name('optrunc')
-        sim_action_simulate = self.driver.find_elements_by_class_name('sim-action-simulate')[2]
+        try:
+            self.driver.get('https://websim.worldquantchallenge.com/simulate')
+            input_form = self.driver.find_element_by_class_name('CodeMirror-line')
+            settings_button = self.driver.find_element_by_class_name('test-settingslink')
+            region_value = self.driver.find_element_by_xpath(
+                "//select[@name='region']/option[text()='{}']".format(alpha.region))
+            universe_value = self.driver.find_element_by_xpath(
+                "//select[@name='univid']/option[text()='{}']".format(alpha.universe))
+            delay_value = self.driver.find_element_by_xpath(
+                "//select[@name='delay']/option[text()='{}']".format(alpha.delay))
+            neutralization_value = self.driver.find_element_by_xpath(
+                "//select[@name='opneut']/option[text()='{}']".format(alpha.neutralization))
+            backdays_hidden_value = self.driver.find_element_by_name('backdays')
+            decay_input = self.driver.find_element_by_name('decay')
+            max_stock_weight_input = self.driver.find_element_by_name('optrunc')
+            sim_action_simulate = self.driver.find_elements_by_class_name('sim-action-simulate')[2]
 
-        action_settings = ActionChains(self.driver)
-        action_settings.click(input_form)
-        action_settings.send_keys(alpha.text)
-        action_settings.click(settings_button)
-        action_settings.click(region_value)
-        action_settings.click(universe_value)
-        action_settings.click(delay_value)
-        action_settings.click(decay_input)
-        action_settings.send_keys(str(alpha.decay))
-        action_settings.click(max_stock_weight_input)
-        action_settings.send_keys(str(alpha.max_stock_weight))
-        action_settings.click(neutralization_value)
-        action_settings.click(backdays_hidden_value)
-        action_settings.send_keys(str(alpha.lookback_days))  # not a selector actually
-        action_settings.click(settings_button)
-        action_settings.click(sim_action_simulate)
-        action_settings.perform()
+            action_settings = ActionChains(self.driver)
+            action_settings.click(input_form)
+            action_settings.send_keys(alpha.text)
+            action_settings.click(settings_button)
+            action_settings.click(region_value)
+            action_settings.click(universe_value)
+            action_settings.click(delay_value)
+            action_settings.click(decay_input)
+            action_settings.send_keys(str(alpha.decay))
+            action_settings.click(max_stock_weight_input)
+            action_settings.send_keys(str(alpha.max_stock_weight))
+            action_settings.click(neutralization_value)
+            action_settings.click(backdays_hidden_value)
+            action_settings.send_keys(str(alpha.lookback_days))  # not a selector actually
+            action_settings.click(settings_button)
+            action_settings.click(sim_action_simulate)
+            action_settings.perform()
 
-        # по идее если запихнуть это в один action, то система зависнет до тех пор, пока не появятся все элементы, но
-        # это неточно, не проверял, на всякий случай делаю в раздельных action-ах
-        test_btn = self.driver.find_element_by_id('test-statsBtn')
-        action_test = ActionChains(self.driver)
-        action_test.click(test_btn)
-        action_test.perform()
+            # по идее если запихнуть это в один action, то система зависнет до тех пор, пока не появятся все элементы, но
+            # это неточно, не проверял, на всякий случай делаю в раздельных action-ах
+            test_btn = self.driver.find_element_by_id('test-statsBtn')
+            action_test = ActionChains(self.driver)
+            action_test.click(test_btn)
+            action_test.perform()
 
-        corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
-        action_get_corr = ActionChains(self.driver)
-        action_get_corr.click(corr_button)
-        action_get_corr.perform()
+            corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
+            action_get_corr = ActionChains(self.driver)
+            action_get_corr.click(corr_button)
+            action_get_corr.perform()
 
-        corrs = dict()
-        corr_block = self.driver.find_element_by_class_name('highcharts-series')
-        corr_rects = corr_block.find_element_by_tag_name('rect')
-        for rect_id, rect in enumerate(corr_rects):
-            elem_height = rect.get_attribute('height')
-            elem_width = rect.get_attribute('width')
-            if (int(elem_height) == 0) and (int(elem_width) == 0):
-                continue
+            corrs = dict()
+            corr_block = self.driver.find_element_by_class_name('highcharts-series')
+            corr_rects = corr_block.find_element_by_tag_name('rect')
+            for rect_id, rect in enumerate(corr_rects):
+                elem_height = rect.get_attribute('height')
+                elem_width = rect.get_attribute('width')
+                if (int(elem_height) == 0) and (int(elem_width) == 0):
+                    continue
+                else:
+                    corrs[rect_id] = elem_height
+
+            left_corr_index = min(corrs.keys())
+            right_corr_index = max(corrs.keys())
+
+            left_corr_value = -1.0 + left_corr_index * 0.1
+            right_corr_value = -1.0 + right_corr_index * 0.1 + 0.1
+
+            alpha.stats['year_by_year'] = self._get_stats()
+            alpha.stats['left_corr'] = left_corr_value
+            alpha.stats['right_corr'] = right_corr_value
+
+            # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
+            self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name('menu').find_element_by_class_name('item')[3].click()
+            # жмём check submission
+            self.driver.find_element_by_id('checkAlphaContainer').click()
+            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name(
+                'alert-1').find_element_by_class_name('content').text()
+            print(submittable)
+            submittable_flag = True
+            if not 'able' in submittable.lower():
+                submittable_flag = False
+
+            alpha.stats['submittable'] = submittable_flag
+
+            """
+            https://s.mail.ru/FAbH/GwQ3NS9VZ
+            """
+        except NoSuchElementException as err:
+            if self._error(err):
+                pass
             else:
-                corrs[rect_id] = elem_height
-
-        left_corr_index = min(corrs.keys())
-        right_corr_index = max(corrs.keys())
-
-        left_corr_value = -1.0 + left_corr_index * 0.1
-        right_corr_value = -1.0 + right_corr_index * 0.1 + 0.1
-
-        """
-        https://s.mail.ru/FAbH/GwQ3NS9VZ
-        """
-
+                exit("Couldn't login again, it can be serious issue, stopping...")
         # TODO: далее идёт принятие решение о заливании альфы
-        # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
-        self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name('menu').find_element_by_class_name('item')[3].click()
-
         # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
         # прогера?
-        self.driver.find_element_by_id('checkAlphaContainer').click()
-        self.driver.find_element_by_id('submitAlphaContainer').click()
-
-        # self.stats(i, alpha)
+        # self.driver.find_element_by_id('checkAlphaContainer').click()
+        # self.driver.find_element_by_id('submitAlphaContainer').click()
 
     def simulate(self, alphas_df, res_df=None, i_start=None):
         """
@@ -274,7 +297,7 @@ class WebSim(object):
                             exit(-1)
 
             except NoSuchElementException as err:
-                if not self.error(err, i):
+                if not self.error(err):
                     i_start = i + 1
                 else:
                     i_start = i
@@ -284,12 +307,11 @@ class WebSim(object):
                 res_df.to_csv(self.date + '_simulate.csv', index=False)
                 break
 
-    def error(self, error, i):
+    def _error(self, error):
         """
-
-        :param error:
-        :param i:
-        :return:
+        :param error: Объект ошибки
+        :return: Возвращает True, если элемент удалось дождаться и произошел успешный перелогин,
+        если перелогиниться не удалось, то возвращает False
         """
         if 'CodeMirror-line' in error.msg:
             self.driver.get('https://websim.worldquantchallenge.com/simulate')
