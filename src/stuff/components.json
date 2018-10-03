@@ -1,0 +1,34 @@
+[
+  {
+    "text": [
+      "a1=-indneutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-delay(est_sales,63))));",
+      "a2=0.011*(rank((vwap - close)) / rank((vwap + close))) + 2*rank(volume)/rank(adv20);",
+      "a3=sum(rank(low)/rank(close)*rank(open)/rank(close), 3);",
+      "gross_margin = income/equity;",
+      "a4=Scale(log(gross_margin/delay(gross_margin, 230)));",
+      "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+      "base = isnan(base) ? groupmean(base,market,1) : base;",
+      "base"
+    ],
+    "region": "USA",
+    "universe": "TOP3000",
+    "decay": 10,
+    "delay": 1,
+    "max_stock_weight": 0.003,
+    "neutralization": "market",
+    "lookback_days": 512
+  },
+  {
+    "text": [
+      "lala = income/sales;",
+      "log(lala/delay(lala, 252))"
+    ],
+    "region": "USA",
+    "universe": "TOP3000",
+    "decay": 0,
+    "delay": 1,
+    "max_stock_weight": 0,
+    "neutralization": "subindustry",
+    "lookback_days": 512
+  }
+]

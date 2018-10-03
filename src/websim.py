@@ -229,9 +229,9 @@ class WebSim(object):
             submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name(
                 'alert-1').find_element_by_class_name('content').text()
             print(submittable)
-            submittable_flag = True
-            if not 'able' in submittable.lower():
-                submittable_flag = False
+            submittable_flag = False
+            if 'success' in submittable.lower():
+                submittable_flag = True
 
             alpha.stats['submittable'] = submittable_flag
 
