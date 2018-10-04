@@ -16,6 +16,19 @@ from selenium.common.exceptions import NoSuchElementException
 import numpy as np
 import pandas as pd
 import config
+from string import Formatter
+
+
+class Recipe(object):
+
+    def __init__(self, id, template, description=""):
+        assert isinstance(id, str), "Id must be string HUUUMAN"
+        assert isinstance(template, str), "Template must be string HUUUMAN"
+        assert isinstance(description, str), "Description must be string HUUUMAN"
+        self.id = id
+        self.template = template
+        self.variables = [i[1] for i in Formatter().parse(template)]
+        self.description = description
 
 
 class Alpha(object):
@@ -39,10 +52,11 @@ class Alpha(object):
     def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text):
         assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
         assert isinstance(universe, str), 'Universe of the alpha must be simple string HUUUMAN'
-        assert isinstance(text, str), 'Text of the alpha must be simple string HUUUMAN'
+        assert isinstance(text, list), 'Text of the alpha must be list HUUUMAN'
         assert isinstance(delay, int), 'Delay of the alpha must be simple integer HUUUMAN'
         assert isinstance(decay, int), 'Delay of the alpha must be simple integer HUUUMAN'
-        assert isinstance(max_stock_weight, float), 'Max stock weight of the alpha must be simple float HUUUMAN'
+        assert isinstance(max_stock_weight, float) or isinstance(max_stock_weight,
+                                                                 int), 'Max stock weight of the alpha must be simple float or integer like 0 HUUUMAN'
         assert isinstance(neutralization, str), 'Neutralization of the alpha must be simple string HUUUMAN'
         assert isinstance(lookback_days, int), 'Lookback days must be simple integer HUUUMAN'
 
@@ -56,20 +70,25 @@ class Alpha(object):
         else:
             raise ValueError('Got unexpected region value: {}. Possible values are {}'.format(region.upper(), str(
                 list(Alpha.REGIONS_UNIVERSE.keys()))))
-        self.text = text.lower()
+        new_text = []
+        for elem in text:
+            new_text.append(elem.lower())
+        self.text = new_text
         if str(delay) in Alpha.REGIONS_DELAY[self.region]:
             self.delay = delay
         else:
             raise ValueError("Got unexpected delay value: {}. Possible values are {}".format(delay, str(
                 Alpha.REGIONS_DELAY[self.region])))
         self.decay = decay
-        if max_stock_weight > 0.0:
+        if max_stock_weight >= 0.0:
             self.max_stock_weight = max_stock_weight
         else:
             raise ValueError(
-                "Got unexpected max_stock_weight value: {}. Max stock value must be greater than zero".format(
+                "Got unexpected max_stock_weight value: {}. Max stock value must be greater or equal than zero".format(
                     max_stock_weight))
-
+        # первая буква заглавная, делаем так, чтобы без проблем можно было выставлять значение в селекторе,
+        # не форматируя ничего в коде заливания альфы
+        neutralization = neutralization.capitalize()
         if neutralization in Alpha.NEUTRALIZATIONS:
             self.neutralization = neutralization
         else:
@@ -83,9 +102,39 @@ class Alpha(object):
             raise ValueError("Got unexpected lookback days value: {}. Possible values are {}".format(lookback_days, str(
                 Alpha.LOOKBACKS)))
 
+    @property
+    def text_str(self):
+        res = ""
+        for elem in self.text:
+            res += elem + "\n"
+        return res
+
+    def __str__(self):
+        return \
+            """
+            Alpha object:
+            {region}
+            {universe}
+            {text}
+            {delay}
+            {decay}
+            {max_stock_weight}
+            {neutralization}
+            {lookback_days}
+            """.format(
+                region=self.region,
+                universe=self.universe,
+                text=self.text,
+                delay=self.delay,
+                decay=self.decay,
+                max_stock_weight=self.max_stock_weight,
+                neutralization=self.neutralization,
+                lookback_days=self.lookback_days
+            )
+
 
 class WebSim(object):
-    def __init__(self, implicitly_wait=60):
+    def __init__(self, implicitly_wait=120):
 
         self.logger = logging.getLogger(self.__class__.__name__)
         try:
@@ -103,7 +152,8 @@ class WebSim(object):
         options.add_argument('window-size=1366x768')
         self.driver = webdriver.Chrome(chrome_options=options,
                                        executable_path=config.CHROMEDRIVER_PATH)
-        self.driver.implicitly_wait(60)  # будет ждать implicitly_wait секунд появления элемента на странице
+        self.driver.implicitly_wait(
+            implicitly_wait)  # будет ждать implicitly_wait секунд появления элемента на странице
         self.date = datetime.datetime.now().__str__().split()[0]
         self.login_time = -1
 
@@ -173,7 +223,7 @@ class WebSim(object):
 
             action_settings = ActionChains(self.driver)
             action_settings.click(input_form)
-            action_settings.send_keys(alpha.text)
+            action_settings.send_keys(alpha.text_str)
             action_settings.click(settings_button)
             action_settings.click(region_value)
             action_settings.click(universe_value)
@@ -223,7 +273,8 @@ class WebSim(object):
             alpha.stats['right_corr'] = right_corr_value
 
             # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
-            self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name('menu').find_element_by_class_name('item')[3].click()
+            self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name(
+                'menu').find_element_by_class_name('item')[3].click()
             # жмём check submission
             self.driver.find_element_by_id('checkAlphaContainer').click()
             submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name(
@@ -243,11 +294,11 @@ class WebSim(object):
                 pass
             else:
                 exit("Couldn't login again, it can be serious issue, stopping...")
-        # TODO: далее идёт принятие решение о заливании альфы
-        # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
-        # прогера?
-        # self.driver.find_element_by_id('checkAlphaContainer').click()
-        # self.driver.find_element_by_id('submitAlphaContainer').click()
+                # TODO: далее идёт принятие решение о заливании альфы
+                # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
+                # прогера?
+                # self.driver.find_element_by_id('checkAlphaContainer').click()
+                # self.driver.find_element_by_id('submitAlphaContainer').click()
 
     def simulate(self, alphas_df, res_df=None, i_start=None):
         """

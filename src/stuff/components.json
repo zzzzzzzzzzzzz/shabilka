@@ -27,7 +27,7 @@
     "universe": "TOP3000",
     "decay": 0,
     "delay": 1,
-    "max_stock_weight": 0,
+    "max_stock_weight": 0.0,
     "neutralization": "subindustry",
     "lookback_days": 512
   }
