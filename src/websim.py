@@ -300,64 +300,6 @@ class WebSim(object):
                 # self.driver.find_element_by_id('checkAlphaContainer').click()
                 # self.driver.find_element_by_id('submitAlphaContainer').click()
 
-    def simulate(self, alphas_df, res_df=None, i_start=None):
-        """
-        Берёт датафрейм с альфами, и прогоняет в вебсиме
-        :param alphas_df: датафрейм с альфами
-        :param res_df: результирующий датафрейм
-        :param i_start: индекс начала в датафрейме с альфами
-        :return:
-        """
-        if res_df is None:
-            res_df = pd.DataFrame(index=range(alphas_df.shape[0] * 7), columns=alpha_stats)
-
-        if i_start is None:
-            i_start = res_df.dropna(how='all').shape[0] / 7
-            # i_start = (res_df.dropna(how='all').index[-1] + 1) / 7
-
-        self.res_df = res_df
-        self.alphas_df = alphas_df
-
-        while (1):
-            try:
-                for i in range(alphas_df.shape[0])[i_start:]:
-                    alpha = alphas_df.iloc[i][0]
-
-                    self.driver.get('https://websim.worldquantchallenge.com/simulate')
-                    self.driver.find_element_by_class_name('CodeMirror-line').click()
-
-                    action = ActionChains(self.driver)
-                    action.send_keys(alpha)
-                    action.perform()
-
-                    self.driver.find_elements_by_class_name('col-xs-4')[2].click()
-                    self.driver.find_element_by_id('test-statsBtn').click()
-
-                    self.stats(i, alpha)
-                    if i % 30 == 0:
-                        # промежуточные результаты
-                        # save_df.iloc[save_start * 7:(i + 1) * 7] = res_df.iloc[save_start * 7:(i + 1) * 7]
-                        res_df.to_csv(self.date + '_simulate.csv', index=False)
-                        save_start = i + 1
-
-                    if int(time.time()) - self.login_time > 10800:
-                        # перелогин
-                        if self.login(relog=True):
-                            self.login_time = int(time.time())
-                        else:
-                            exit(-1)
-
-            except NoSuchElementException as err:
-                if not self.error(err):
-                    i_start = i + 1
-                else:
-                    i_start = i
-
-            if i == alphas_df.shape[0] - 1:
-                # пишем финальный результат
-                res_df.to_csv(self.date + '_simulate.csv', index=False)
-                break
-
     def _error(self, error):
         """
         :param error: Объект ошибки

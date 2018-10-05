@@ -106,7 +106,7 @@ class BasicGrinder(object):
                         new_alpha_params_dict['text'] = res
                         new_alpha_params_dict['lookback_days'] = 512
                         self.idx += 1
-                        if self.idx-1 < self.begin_index:
+                        if self.idx - 1 < self.begin_index:
                             return None
                         else:
                             return Alpha(**new_alpha_params_dict)
@@ -114,20 +114,30 @@ class BasicGrinder(object):
             raise e
         except Exception as e:
             print("Caught an exception during iteration. Stopping and writing the last index")
-            with open('../logs/' + self.__class__.__str__() + '_stopped_on.log', 'w') as f:
+            with open('../logs/' + self.__class__.__name__ + '_stopped_on.log', 'w') as f:
                 f.write(self.idx)
             raise e
 
 
-def read_components(filepath):
-    with open(filepath, 'r') as f:
-        alphas_json = json.load(f)
+def read_init(classname):
+    def read(filepath):
+        module = __import__('websim')
+        class_ = getattr(module, classname)
 
-    res = []
-    for alpha in alphas_json:
-        res.append(Alpha(**alpha))
+        with open(filepath, 'r') as f:
+            records_json = json.load(f)
 
-    return res
+        res = []
+        for record in records_json:
+            res.append(class_(**record))
+
+        return res
+
+    return read
+
+
+read_components = read_init('Alpha')
+read_recipes = read_init('Recipe')
 
 
 if __name__ == "__main__":
