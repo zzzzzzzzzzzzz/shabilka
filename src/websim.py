@@ -7,6 +7,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,7 +21,6 @@ from string import Formatter
 
 
 class Recipe(object):
-
     def __init__(self, id, template, description=""):
         assert isinstance(id, str), "Id must be string HUUUMAN"
         assert isinstance(template, str), "Template must be string HUUUMAN"
@@ -86,8 +86,7 @@ class Alpha(object):
             raise ValueError(
                 "Got unexpected max_stock_weight value: {}. Max stock value must be greater or equal than zero".format(
                     max_stock_weight))
-        # первая буква заглавная, делаем так, чтобы без проблем можно было выставлять значение в селекторе,
-        # не форматируя ничего в коде заливания альфы
+
         neutralization = neutralization.capitalize()
         if neutralization in Alpha.NEUTRALIZATIONS:
             self.neutralization = neutralization
@@ -102,11 +101,15 @@ class Alpha(object):
             raise ValueError("Got unexpected lookback days value: {}. Possible values are {}".format(lookback_days, str(
                 Alpha.LOOKBACKS)))
 
+    def print_stats(self):
+        for k, v in self.stats.items():
+            print(k, v)
+
     @property
     def text_str(self):
         res = ""
         for elem in self.text:
-            res += elem + "\n"
+            res += elem
         return res
 
     def __str__(self):
@@ -141,7 +144,7 @@ class WebSim(object):
             os.makedirs('../logs/')
         except OSError:
             pass
-        hdlr = logging.FileHandler('logs/{}.log'.format(self.__class__.__name__))
+        hdlr = logging.FileHandler('../logs/{}.log'.format(self.__class__.__name__))
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
@@ -163,9 +166,9 @@ class WebSim(object):
     def login(self, relog=False):
         try:
             if relog:
-                self.driver.get('https://websim.worldquantchallenge.com/logout')
+                self.driver.get('https://www.worldquantvrc.com/simulate')
 
-            self.driver.get('https://websim.worldquantchallenge.com/en/cms/wqc/websim/')
+            self.driver.get('https://www.worldquantvrc.com/login')
             log_pass = self.driver.find_elements_by_class_name('form-control')
             log_pass[0].clear(), log_pass[0].send_keys(config.EMAIL)
             log_pass[1].clear(), log_pass[1].send_keys(config.PASSWORD)
@@ -173,6 +176,7 @@ class WebSim(object):
 
             self.login_time = time.time()
             time.sleep(10)
+            print("Login successuful")
             return True
         except Exception as e:
             self.logger.error("Couldn't log in")
@@ -205,46 +209,46 @@ class WebSim(object):
     def simulate_alpha(self, alpha):
         assert isinstance(alpha, Alpha), 'Alpha must be Alpha class instance'
         try:
-            self.driver.get('https://websim.worldquantchallenge.com/simulate')
+            self.driver.get('https://www.worldquantvrc.com/simulate')
             input_form = self.driver.find_element_by_class_name('CodeMirror-line')
+            # TODO: remove CodeMirror events from the input form. It substitutes symbols
+            # self.driver.execute_script('''
+            #
+            # ''', input_form)
             settings_button = self.driver.find_element_by_class_name('test-settingslink')
-            region_value = self.driver.find_element_by_xpath(
-                "//select[@name='region']/option[text()='{}']".format(alpha.region))
-            universe_value = self.driver.find_element_by_xpath(
-                "//select[@name='univid']/option[text()='{}']".format(alpha.universe))
-            delay_value = self.driver.find_element_by_xpath(
-                "//select[@name='delay']/option[text()='{}']".format(alpha.delay))
-            neutralization_value = self.driver.find_element_by_xpath(
-                "//select[@name='opneut']/option[text()='{}']".format(alpha.neutralization))
-            backdays_hidden_value = self.driver.find_element_by_name('backdays')
+            region_select = Select(self.driver.find_element_by_name('region'))
+            universe_select = Select(self.driver.find_element_by_name('univid'))
+            delay_select = Select(self.driver.find_element_by_name('delay'))
+            neutralization_select = Select(self.driver.find_element_by_name('opneut'))
+            backdays_hidden_value = self.driver.find_element_by_name('backdays')  # not visible selector, custom field
             decay_input = self.driver.find_element_by_name('decay')
             max_stock_weight_input = self.driver.find_element_by_name('optrunc')
-            sim_action_simulate = self.driver.find_elements_by_class_name('sim-action-simulate')[2]
+            sim_action_simulate = self.driver.find_element_by_class_name('sim-action-simulate')
 
-            action_settings = ActionChains(self.driver)
-            action_settings.click(input_form)
-            action_settings.send_keys(alpha.text_str)
-            action_settings.click(settings_button)
-            action_settings.click(region_value)
-            action_settings.click(universe_value)
-            action_settings.click(delay_value)
-            action_settings.click(decay_input)
-            action_settings.send_keys(str(alpha.decay))
-            action_settings.click(max_stock_weight_input)
-            action_settings.send_keys(str(alpha.max_stock_weight))
-            action_settings.click(neutralization_value)
-            action_settings.click(backdays_hidden_value)
-            action_settings.send_keys(str(alpha.lookback_days))  # not a selector actually
-            action_settings.click(settings_button)
-            action_settings.click(sim_action_simulate)
-            action_settings.perform()
+            input_form.click()
+            set_input_action = ActionChains(self.driver)
+            set_input_action.send_keys(alpha.text_str)
+            set_input_action.perform()
 
-            # по идее если запихнуть это в один action, то система зависнет до тех пор, пока не появятся все элементы, но
-            # это неточно, не проверял, на всякий случай делаю в раздельных action-ах
+            settings_button.click()
+            region_select.select_by_visible_text(alpha.region)
+            universe_select.select_by_visible_text(alpha.universe)
+            delay_select.select_by_visible_text(str(alpha.delay))
+            neutralization_select.select_by_visible_text(alpha.neutralization)
+            decay_input.clear()
+            decay_input.send_keys(str(alpha.decay))
+            max_stock_weight_input.clear()
+            max_stock_weight_input.send_keys(str(alpha.max_stock_weight))
+            self.driver.execute_script('''
+                var elem = arguments[0];
+                var value = arguments[1];
+                elem.value = value;
+            ''', backdays_hidden_value, str(alpha.lookback_days))
+            settings_button.click()
+
+            sim_action_simulate.click()
             test_btn = self.driver.find_element_by_id('test-statsBtn')
-            action_test = ActionChains(self.driver)
-            action_test.click(test_btn)
-            action_test.perform()
+            test_btn.click()
 
             corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
             action_get_corr = ActionChains(self.driver)
@@ -253,7 +257,7 @@ class WebSim(object):
 
             corrs = dict()
             corr_block = self.driver.find_element_by_class_name('highcharts-series')
-            corr_rects = corr_block.find_element_by_tag_name('rect')
+            corr_rects = corr_block.find_elements_by_tag_name('rect')
             for rect_id, rect in enumerate(corr_rects):
                 elem_height = rect.get_attribute('height')
                 elem_width = rect.get_attribute('width')
@@ -272,19 +276,25 @@ class WebSim(object):
             alpha.stats['left_corr'] = left_corr_value
             alpha.stats['right_corr'] = right_corr_value
 
+
             # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
             self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name(
-                'menu').find_element_by_class_name('item')[3].click()
+                'menu').find_elements_by_class_name('item')[3].click()
             # жмём check submission
             self.driver.find_element_by_id('checkAlphaContainer').click()
-            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name(
-                'alert-1').find_element_by_class_name('content').text()
+            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
             print(submittable)
             submittable_flag = False
             if 'success' in submittable.lower():
                 submittable_flag = True
 
             alpha.stats['submittable'] = submittable_flag
+
+            # TODO: далее идёт принятие решение о заливании альфы
+            # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
+            # прогера?
+            # self.driver.find_element_by_id('checkAlphaContainer').click()
+            # self.driver.find_element_by_id('submitAlphaContainer').click()
 
             """
             https://s.mail.ru/FAbH/GwQ3NS9VZ
@@ -293,12 +303,8 @@ class WebSim(object):
             if self._error(err):
                 pass
             else:
-                exit("Couldn't login again, it can be serious issue, stopping...")
-                # TODO: далее идёт принятие решение о заливании альфы
-                # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
-                # прогера?
-                # self.driver.find_element_by_id('checkAlphaContainer').click()
-                # self.driver.find_element_by_id('submitAlphaContainer').click()
+                print("Couldn't login again, it can be serious issue, stopping...")
+                exit(str(err))
 
     def _error(self, error):
         """
@@ -307,7 +313,7 @@ class WebSim(object):
         если перелогиниться не удалось, то возвращает False
         """
         if 'CodeMirror-line' in error.msg:
-            self.driver.get('https://websim.worldquantchallenge.com/simulate')
+            self.driver.get('https://www.worldquantvrc.com/simulate')
             try:
                 element_present = EC.presence_of_element_located((By.CLASS_NAME, 'CodeMirror-line'))
                 WebDriverWait(self.driver, 120).until(element_present)

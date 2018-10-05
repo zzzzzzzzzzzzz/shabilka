@@ -9,7 +9,7 @@ if __name__=="__main__":
     p.add_argument('--input', '-i', type=str, help='path to file with alphas', required=True)
     p.add_argument('--recipes', '-r', type=str, help='path to file with recipies', required=True)
     p.add_argument('--recipe_name', '-rn', type=str, help='id (name) of the recipe', required=True)
-    p.add_argument('--begin_index', '-bi', type=int, default=0, help='index of alpha to start with for BasicGrinder', required=True)
+    p.add_argument('--begin_index', '-bi', type=int, default=0, help='index of alpha to start with for BasicGrinder', required=False)
     args = p.parse_args()
 
     alphas_filepath = args.input
@@ -28,7 +28,14 @@ if __name__=="__main__":
         raise Exception("Couldn't find recipe with id {}".format(recipe_name))
 
     websim = WebSim()
-    websim.login(relog=True)
-
-    for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
-        websim.simulate_alpha(new_alpha)
+    if websim.login(relog=True):
+        idx = 0
+        for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
+            print("Going to simulate alpha:")
+            print(new_alpha)
+            websim.simulate_alpha(new_alpha)
+            new_alpha.print_stats()
+            print("Current index {}".format(idx))
+            idx += 1
+    else:
+        print("Something went wrong, try later. Maybe service is down for maintenance")

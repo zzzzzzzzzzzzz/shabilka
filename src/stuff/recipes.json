@@ -2,11 +2,11 @@
   {
     "id": "stupid_sum",
     "description": "The first ultimate pattern",
-    "template": "$A + $B"
+    "template": "{A} + {B}"
   },
   {
     "id": "test_2",
     "description": "revenue/assets ещё никому не повредил",
-    "template": "$A + $B + revenue/assets"
+    "template": "{A} + {B} + revenue/assets"
   }
 ]
