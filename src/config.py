@@ -11,6 +11,11 @@ PHANTOMJS_SERVICE_LOG_PATH = '../logs/ghostdriver.log'
 
 CHROMEDRIVER_PATH = os.path.join(BASE_PATH, 'chromedriver')
 
+DB_HOST = 'localhost'
+DB_NAME = 'stuff'
+DB_USER = 'stuffman'
+DB_USER_PASSWORD = 'stuff'
+
 
 # Для указания локальных настроек типа email-а и пароля используйте файл local_config
 from local_config import *
