@@ -13,7 +13,8 @@ class RoundRobin(object):
     """
 
     def __init__(self, arr):
-        assert isinstance(arr, list) or isinstance(arr, tuple), "To perform round robin you should pass array-like object"
+        assert isinstance(arr, list) or isinstance(arr,
+                                                   tuple), "To perform round robin you should pass array-like object"
         self.arr = arr
         self._to_yield_idx = 0
         self._length = len(self.arr)
@@ -40,7 +41,6 @@ class DictRoundRobin(object):
         self.d = d
         self._r = 0
         self._robins = {}
-        self._idx = 0
 
     def __iter__(self):
         if self.d:
@@ -63,6 +63,11 @@ class DictRoundRobin(object):
 
 
 class BasicGrinder(object):
+    """
+    Базовый гриндер.
+    Берёт на вход рецепт, массив альф и перебирает всевозможные перестановки (размера количества переменных в
+    шаблоне) и параметры "в колесе".
+    """
     def __init__(self, recipe, alphas, begin_index=0):
         assert isinstance(recipe, Recipe), "recipe must be Recipe class instance"
         assert isinstance(alphas, list), "alphas must be list"
@@ -78,16 +83,24 @@ class BasicGrinder(object):
         print("Number of variables {}".format(self.variables_number))
 
     def __iter__(self):
-        self._permutations = itertools.combinations(self.alphas, self.variables_number)
-        self._params = None
+        self._permutations = itertools.permutations(self.alphas, self.variables_number)
+        self._params = DictRoundRobin({}).__iter__()
         self._res = None
         self._idx = 0
         return self
 
-    # TODO: debug this iterator
-    def __next__(self):
+    def _get_next_params(self):
+        params_combination = self._params.__next__()  # вылетает на первой итерации
+        new_alpha_params_dict = dict(params_combination)
+        new_alpha_params_dict['text'] = self._res
+        new_alpha_params_dict['lookback_days'] = 512
+        return new_alpha_params_dict
+
+    def _next(self):
         try:
-            if not self._params:
+            return Alpha(**self._get_next_params())
+        except StopIteration:
+            try:
                 alphas_permutation = self._permutations.__next__()
                 res = []
                 new_vars = []
@@ -113,27 +126,23 @@ class BasicGrinder(object):
 
                 res += [self.recipe.template.format(**dict(zip(self.recipe.variables, new_vars)))]
                 self._res = res
-                self._params = DictRoundRobin(params)
-            try:
-                params_combination = self._params.__next__() # вылетает на первой итерации
-                print(dict(params_combination))
-                new_alpha_params_dict = dict(params_combination)
-                new_alpha_params_dict['text'] = self._res
-                new_alpha_params_dict['lookback_days'] = 512
-                print(new_alpha_params_dict)
-                self._idx += 1
-                if self._idx - 1 < self.begin_index:
-                    return None
-                else:
-                    return Alpha(**new_alpha_params_dict)
-            except StopIteration:
-                self._params = None
-                self._res = None
-        except Exception as e:
-            print("Caught an exception during iteration. Stopping and writing the last index")
-            with open('../logs/' + self.__class__.__name__ + '_stopped_on.log', 'w') as f:
-                f.write(str(self._idx))
-            raise e
+                self._params = DictRoundRobin(params).__iter__()
+                return Alpha(**self._get_next_params())
+            except StopIteration as e:
+                print("Permutations ended, stopping")
+                raise e
+            except Exception as e:
+                print("Caught an exception during iteration. Stopping and writing the last index")
+                with open('../logs/' + self.__class__.__name__ + '_stopped_on.log', 'w') as f:
+                    f.write(str(self._idx))
+                raise e
+
+    def __next__(self):
+        while self._idx < self.begin_index:
+            self._next()
+            self._idx += 1
+        self._idx += 1
+        return self._next()
 
 
 def read_init(classname):
@@ -153,9 +162,19 @@ def read_init(classname):
     return read
 
 
-read_components = read_init('Alpha')
-read_recipes = read_init('Recipe')
+read_components = read_init('Alpha') # читалка альф из файла типа components.json
+read_recipes = read_init('Recipe') # читалка рецептов из файла типа recipes.json
 
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)

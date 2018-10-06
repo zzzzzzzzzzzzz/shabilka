@@ -1,7 +1,21 @@
 # coding=utf-8
+"""
+Пример простой стратегии.
+Вообще говоря в данном случае стратегия определяется тем какой гриндер используется.
+Здесь используется класс BasicGrinder. По сути это просто перебор всевозможных вариантов.
+Никаких направленных действий по типу "чуть-чуть подшабить turnover" здесь не происходит.
+
+
+                                                    “
+                                    It's up to you
+                                „
+                                                                        Gospel of Kulish, 6:19-21
+"""
+
+
 import argparse
 
-from stuff.helpers import read_components, read_recipes, BasicGrinder
+from stuff.helpers import read_components, read_recipes, BasicGrinder, bcolors
 from websim import WebSim
 
 if __name__=="__main__":
@@ -29,13 +43,13 @@ if __name__=="__main__":
 
     websim = WebSim()
     if websim.login(relog=True):
-        idx = 0
         for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
-            print("Going to simulate alpha:")
+            print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:")
             print(new_alpha)
             websim.simulate_alpha(new_alpha)
-            new_alpha.print_stats()
-            print("Current index {}".format(idx))
-            idx += 1
+            if new_alpha.stats['submittable']:
+                print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable")
+            else:
+                print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable")
     else:
-        print("Something went wrong, try later. Maybe service is down for maintenance")
+        print(bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance")

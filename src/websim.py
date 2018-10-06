@@ -14,13 +14,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
-import numpy as np
-import pandas as pd
 import config
 from string import Formatter
 
 
 class Recipe(object):
+    """
+    Базовый класс рецепта.
+    Переменные в template это просто именованные значения для функции .format().
+    Например, {A} + {B} - две переменные А и B
+    """
     def __init__(self, id, template, description=""):
         assert isinstance(id, str), "Id must be string HUUUMAN"
         assert isinstance(template, str), "Template must be string HUUUMAN"
@@ -32,6 +35,10 @@ class Recipe(object):
 
 
 class Alpha(object):
+    """
+    Базовый класс Alpha, с объектами класса Alpha работают методы класса Websim
+    """
+
     REGIONS_UNIVERSE = {'USA': ['TOP3000', 'TOP2000', 'TOP1000', 'TOP500', 'TOP200'],
                         'EUR': ['TOP1200', 'TOP800', 'TOP600', 'TOP400', 'TOP100'],
                         'ASI': ['TOP1500', 'TOP1000', 'TOP500', 'TOP150']}
@@ -47,7 +54,11 @@ class Alpha(object):
     alpha_stats = ['year', 'booksize', 'long_count', 'short_count', 'pnl', 'sharpe', 'fitness',
                    'returns', 'draw_down', 'turn_over', 'margin']
 
-    stats = {}
+    stats = {
+        'submittable': False,
+        'submitted': False,
+        'year_by_year': []
+    }
 
     def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text):
         assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
@@ -137,6 +148,9 @@ class Alpha(object):
 
 
 class WebSim(object):
+    """
+    Базовый класс вебсим, через него взаимодействуем с сайтом wq
+    """
     def __init__(self, implicitly_wait=120):
 
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -161,9 +175,19 @@ class WebSim(object):
         self.login_time = -1
 
     def __del__(self):
+        """
+        Не забываем убивать драйвер (процесс хрома)
+        :return: None
+        """
         self.driver.quit()
 
     def login(self, relog=False):
+        """
+        Данные берутся из конфига
+        :param relog: если флаг relog True, то предварительно идёт запрос страницы симуляции, чтобы после логина
+        перекинуло куда надо
+        :return: True в случае успешного логина, False иначе
+        """
         try:
             if relog:
                 self.driver.get('https://www.worldquantvrc.com/simulate')
@@ -185,6 +209,10 @@ class WebSim(object):
             # find dashboard element
 
     def _get_stats(self):
+        """
+        Возвращает статистику год за годом
+        :return: list of dicts
+        """
         table = self.driver.find_elements_by_class_name('standard-row')
         stats = []
         for row_id, row in enumerate(table):
@@ -207,7 +235,12 @@ class WebSim(object):
         return stats
 
     def simulate_alpha(self, alpha):
-        assert isinstance(alpha, Alpha), 'Alpha must be Alpha class instance'
+        """
+        Симулирует одну альфу, выставляет настройки, вставляет текст, жмёт на нужные кнопки
+        :param alpha: объект класса Alpha
+        :return: ничего не возвращает, выкинет исключение в случае ошибки
+        """
+        assert isinstance(alpha, Alpha), 'alpha must be Alpha class instance'
         try:
             self.driver.get('https://www.worldquantvrc.com/simulate')
             input_form = self.driver.find_element_by_class_name('CodeMirror-line')
@@ -276,6 +309,10 @@ class WebSim(object):
             alpha.stats['left_corr'] = left_corr_value
             alpha.stats['right_corr'] = right_corr_value
 
+            """
+            Структура столбцов корреляции
+            https://s.mail.ru/FAbH/GwQ3NS9VZ
+            """
 
             # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
             self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name(
@@ -283,28 +320,36 @@ class WebSim(object):
             # жмём check submission
             self.driver.find_element_by_id('checkAlphaContainer').click()
             submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
-            print(submittable)
             submittable_flag = False
             if 'success' in submittable.lower():
                 submittable_flag = True
 
             alpha.stats['submittable'] = submittable_flag
+            alpha.stats['submitted'] = False
 
-            # TODO: далее идёт принятие решение о заливании альфы
-            # здесь возможны варианты, может сделать этот класс базовым? А реализацию simulate_alpha перенести на плечи
-            # прогера?
-            # self.driver.find_element_by_id('checkAlphaContainer').click()
-            # self.driver.find_element_by_id('submitAlphaContainer').click()
-
-            """
-            https://s.mail.ru/FAbH/GwQ3NS9VZ
-            """
         except NoSuchElementException as err:
             if self._error(err):
                 pass
             else:
                 print("Couldn't login again, it can be serious issue, stopping...")
                 exit(str(err))
+
+    def submit_alpha(self, alpha):
+        """
+        Сабмитит альфу. Предполагается, что браузер уже находится на вкладке с кнопкой submit
+        :param alpha: объект класса Alpha. Только что просимулированная альфа
+        :return: True если альфа засабмитилась, False иначе.
+        Также выставляет флаг submitted в словаре stats
+        """
+        assert isinstance(alpha, Alpha), 'alpha must be Alpha class instance'
+        if alpha.stats['submittable']:
+            self.driver.find_element_by_id('submitAlphaContainer').click()
+            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
+            if 'success' in submittable.lower():
+                alpha.stats['submitted'] = True
+            else:
+                alpha.stats['submitted'] = False
+            return alpha.stats['submitted']
 
     def _error(self, error):
         """
