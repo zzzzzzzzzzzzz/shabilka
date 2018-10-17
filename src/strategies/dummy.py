@@ -17,6 +17,8 @@ import argparse
 
 from stuff.helpers import read_components, read_recipes, BasicGrinder, bcolors
 from websim import WebSim
+import pymysql
+import config
 
 if __name__=="__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -41,12 +43,18 @@ if __name__=="__main__":
     if not recipe:
         raise Exception("Couldn't find recipe with id {}".format(recipe_name))
 
+    with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD, config.DB_NAME) as cursor:
+        if not recipe.to_db(cursor):
+            raise Exception("Couldn't insert recipe to db")
+    # close connection, thus committing changes
     websim = WebSim()
     if websim.login(relog=True):
         for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
             print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:")
             print(new_alpha)
             websim.simulate_alpha(new_alpha)
+            with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD, config.DB_NAME) as cursor:
+                new_alpha.to_db(cursor, recipe)
             if new_alpha.stats['submittable']:
                 print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable")
             else:

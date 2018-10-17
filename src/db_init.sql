@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS shabilka_db.recipes (
   description TEXT,
   template TEXT NOT NULL
 );
-
+-- TODO: добавить в alphas собственно параметры альфы (можно сразу json)
 CREATE TABLE IF NOT EXISTS shabilka_db.alphas (
   id INTEGER PRIMARY KEY AUTO_INCREMENT,
   md5hash VARCHAR(255) UNIQUE,
@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS shabilka_db.alphas (
   submitted BOOLEAN DEFAULT FALSE,
   submitted_time DATETIME DEFAULT '1970-01-01 00:00:01',
   recipe_id VARCHAR(255),
+  components json DEFAULT NULL,
   INDEX `md5hash_index` (`md5hash`),
   CONSTRAINT FOREIGN KEY `recipes_foreign_key` (`recipe_id`) REFERENCES recipes(`id`)
 );
@@ -39,5 +40,7 @@ CREATE TABLE IF NOT EXISTS shabilka_db.alphas_stats (
   draw_down FLOAT COMMENT 'Percent',
   booksize FLOAT COMMENT 'Millions',
   pnl FLOAT COMMENT 'Millions',
+  left_corr FLOAT,
+  right_corr FLOAT,
   CONSTRAINT FOREIGN KEY `alphas_foreign_key` (`alpha_id`) REFERENCES alphas(`id`)
 );

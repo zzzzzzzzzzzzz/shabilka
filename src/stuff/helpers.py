@@ -55,13 +55,13 @@ class DictRoundRobin(object):
         if self._idx < self._r:
             to_return = []
             for k, v in self._robins.items():
-                self._idx += 1
                 to_return.append((k, v.__next__()))
+            self._idx += 1
             return to_return
         else:
             raise StopIteration
 
-
+# TODO: ещё раз разобраться с базовым гриндером
 class BasicGrinder(object):
     """
     Базовый гриндер.
@@ -94,6 +94,7 @@ class BasicGrinder(object):
         new_alpha_params_dict = dict(params_combination)
         new_alpha_params_dict['text'] = self._res
         new_alpha_params_dict['lookback_days'] = 512
+        new_alpha_params_dict['components'] = self._current_components
         return new_alpha_params_dict
 
     def _next(self):
@@ -112,7 +113,9 @@ class BasicGrinder(object):
                     'max_stock_weight': [],
                     'neutralization': [],
                 }
+                self._current_components = []
                 for idx, alpha in enumerate(alphas_permutation):
+                    self._current_components.append(alpha.hash)
                     new_vars.append("var{}".format(idx))
                     old_ending = alpha.text[-1]
                     alpha.text[-1] = alpha.text[-1].replace(';', '')

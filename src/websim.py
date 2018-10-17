@@ -1,4 +1,5 @@
 # coding=utf-8
+import json
 import logging
 import time
 import datetime
@@ -13,6 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
+from hashlib import md5
 
 import config
 from string import Formatter
@@ -32,6 +34,43 @@ class Recipe(object):
         self.template = template
         self.variables = [i[1] for i in Formatter().parse(template)]
         self.description = description
+
+    def _check_db_existance(self, cursor):
+        """
+        По имени (id) проверяет наличие рецепта в таблице recipes
+        :param cursor: объект курсора базы данных mysql
+        :return: True если рецепт есть, False иначе
+        """
+        query = \
+            """
+            SELECT 1 FROM recipes WHERE id='{id}' 
+            """.format(id=self.id)
+        cursor.execute(query)
+        if cursor.fetchone():
+            return True
+        else:
+            return False
+
+    def to_db(self, cursor):
+        """
+        Отправляет рецепт (шаблон) в таблицу recipes
+        :param cursor: объект курсора базы данных mysql
+        :return: True если добавление успешно, False иначе, если рецепт уже был в таблице, то вернёт True
+        """
+        if not self._check_db_existance(cursor):
+            try:
+                query = \
+                    """
+                    INSERT INTO recipes (id, description, template) VALUES ('{id}', '{description}', '{template}')
+                    """.format(id=self.id, description=self.description, template=self.template)
+                cursor.execute(query)
+                return True
+            except Exception as e:
+                print(e)
+                return False
+        else:
+            print("This recipe is already in db: {id}".format(id=self.id))
+            return True
 
 
 class Alpha(object):
@@ -60,16 +99,16 @@ class Alpha(object):
         'year_by_year': []
     }
 
-    def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text):
+    def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text, components=[]):
         assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
         assert isinstance(universe, str), 'Universe of the alpha must be simple string HUUUMAN'
         assert isinstance(text, list), 'Text of the alpha must be list HUUUMAN'
         assert isinstance(delay, int), 'Delay of the alpha must be simple integer HUUUMAN'
         assert isinstance(decay, int), 'Delay of the alpha must be simple integer HUUUMAN'
-        assert isinstance(max_stock_weight, float) or isinstance(max_stock_weight,
-                                                                 int), 'Max stock weight of the alpha must be simple float or integer like 0 HUUUMAN'
+        assert isinstance(max_stock_weight, float) or isinstance(max_stock_weight, int), 'Max stock weight of the alpha must be simple float or integer like 0 HUUUMAN'
         assert isinstance(neutralization, str), 'Neutralization of the alpha must be simple string HUUUMAN'
         assert isinstance(lookback_days, int), 'Lookback days must be simple integer HUUUMAN'
+        assert isinstance(components, list), 'Components must be list type HUUUMAN'
 
         if region.upper() in Alpha.REGIONS_UNIVERSE:
             self.region = region.upper()
@@ -112,16 +151,167 @@ class Alpha(object):
             raise ValueError("Got unexpected lookback days value: {}. Possible values are {}".format(lookback_days, str(
                 Alpha.LOOKBACKS)))
 
+        self.simulated = False
+        if components:
+            self.components = components
+        else:
+            self.components = []
+
     def print_stats(self):
+        """
+        Красиво выводит статы альфы
+        :return: None
+        """
         for k, v in self.stats.items():
             print(k, v)
 
     @property
     def text_str(self):
+        """
+        Представление текста альфы как строчки (вместо массива)
+        :return: строка - текст альфы
+        """
         res = ""
         for elem in self.text:
             res += elem
         return res
+
+    @property
+    def hash(self):
+        """
+        md5 хэш альфы, nuff said
+        ЛУЧШЕ ВОТ ЭТО ВОТ ВООБЩЕ БОЛЬШЕ НЕ ТРОГАТЬ
+        :return: hexdigest md5
+        пример:
+        In [6]: md5('123'.encode('utf-8')).hexdigest()
+        Out[6]: '202cb962ac59075b964b07152d234b70'
+        """
+        return md5(
+            (str(self.region) +
+            str(self.universe) +
+            str(self.text) +
+            str(self.delay) +
+            str(self.decay) +
+            str(self.max_stock_weight) +
+            str(self.neutralization) +
+            str(self.lookback_days)).encode('utf-8')
+        ).hexdigest()
+
+    def _check_db_existance(self, cursor):
+        """
+        Производит проверку наличия альфы по хэшу в таблице alphas
+        :param cursor: объект курсора базы mysql
+        :return: True, если альфа есть в таблице alphas, False иначе
+        """
+        query = \
+            """
+            SELECT 1 FROM alphas WHERE md5hash='{md5hash}'
+            """.format(md5hash=self.hash)
+        cursor.execute(query)
+        if cursor.fetchone():
+            return True
+        else:
+            return False
+
+    def to_db(self, cursor, recipe):
+        """
+        Отправляет все данные связанные с альфой в базу данных.
+
+        Логика следующая. Альфа в любом случае должна быть просимулирована.
+        При вызове сначала проверяется присутствие альфы в базе.
+        Если альфы в базе нет, то производится вставка в таблицы alphas и alphas_stats,
+        если же альфа уже есть в базе, то в случае если в self.stats['submitted'] выставлено True, произойдет вызов sql
+        запроса Update, который выставит флаг submitted в базе в True, если же self.stats['submitted'] False, то ничего
+        не произойдёт и вернётся True.
+        Обратите внимание, что если несколько раз вызывать to_db на альфе с self.stats['submitted'] True, то будет
+        перезаписываться время сабмита (submitted_time).
+        :param cursor: объект курсора базы mysql
+        :param recipe: объект класса Recipe
+        :return: True если удалось вставить альфу в таблицу, False иначе, при этом если запись уже была, вернётся True
+        """
+        if self.simulated:
+            if not self._check_db_existance(cursor):
+                try:
+                    query = \
+                        """
+                        INSERT INTO alphas (md5hash, author, submittable, submitted, recipe_id, components) 
+                        VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{recipe_id}', '{components}')
+                        """.format(md5hash=self.hash,
+                                   author=config.DB_USER,
+                                   submittable=self.stats['submittable'],
+                                   submitted=self.stats['submitted'],
+                                   recipe_id=recipe.id,
+                                   components=json.dumps(self.components))
+                    if self.stats['submitted']:
+                        query = \
+                            """
+                            INSERT INTO alphas (md5hash, author, submittable, submitted, submitted_time, recipe_id, components) 
+                            VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{submitted_time}', '{recipe_id}', '{components}')
+                            """.format(md5hash=self.hash,
+                                       author=config.DB_USER,
+                                       submittable=self.stats['submittable'],
+                                       submitted=self.stats['submitted'],
+                                       submitted_time=datetime.datetime.now(),
+                                       recipe_id=recipe.id,
+                                       components=json.dumps(self.components))
+                    cursor.execute(query)
+
+                    query = \
+                    """
+                    SELECT id FROM alphas WHERE md5hash='{md5hash}'
+                    """.format(md5hash=self.hash)
+                    cursor.execute(query)
+                    d = cursor.fetchone()
+                    alpha_id = None
+                    if d:
+                        alpha_id = d[0]
+                    else:
+                        raise Exception("Couldn't find inserted alpha")
+
+                    for stat in self.stats['year_by_year']:
+                        query = \
+                        """
+                        INSERT INTO alphas_stats (alpha_id, year, fitness, returns, sharpe, long_count, short_count, margin, turn_over, draw_down, booksize, pnl, left_corr, right_corr)
+                        VALUES ({alpha_id}, '{year}', {fitness}, {returns}, {sharpe}, {long_count}, {short_count}, {margin}, {turn_over}, {draw_down}, {booksize}, {pnl}, {left_corr}, {right_corr})
+                        """.format(alpha_id=alpha_id,
+                                   year=stat['year'],
+                                   fitness=stat['fitness'],
+                                   returns=stat['returns'],
+                                   sharpe=stat['sharpe'],
+                                   long_count=stat['long_count'],
+                                   short_count=stat['short_count'],
+                                   margin=stat['margin'],
+                                   turn_over=stat['turn_over'],
+                                   draw_down=stat['draw_down'],
+                                   booksize=stat['booksize'],
+                                   pnl=stat['pnl'],
+                                   left_corr=self.stats['left_corr'],
+                                   right_corr=self.stats['right_corr'])
+                        cursor.execute(query)
+                    return True
+                except Exception as e:
+                    print(e)
+                    return False
+            else:
+                print("This alpha is already in db")
+                if self.stats['submitted']:
+                    print("Now it's submitted, updating field, submitted_time")
+                    try:
+                        query = \
+                        """
+                        UPDATE alphas
+                        SET submitted_time='{submitted_time}'
+                        WHERE md5hash='{md5hash}'
+                        """.format(submitted_time=datetime.datetime.now(),
+                                   md5hash=self.hash)
+                        cursor.execute(query)
+                    except Exception as e:
+                        print(e)
+                        return False
+                return True
+        else:
+            print("Simulate alpha before inserting it to db!")
+            return False
 
     def __str__(self):
         return \
@@ -326,6 +516,7 @@ class WebSim(object):
 
             alpha.stats['submittable'] = submittable_flag
             alpha.stats['submitted'] = False
+            alpha.simulated = True
 
         except NoSuchElementException as err:
             if self._error(err):
