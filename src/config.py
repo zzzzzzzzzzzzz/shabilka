@@ -11,7 +11,7 @@ PHANTOMJS_SERVICE_LOG_PATH = '../logs/ghostdriver.log'
 
 CHROMEDRIVER_PATH = os.path.join(BASE_PATH, 'chromedriver')
 
-DB_HOST = 'localhost'
+DB_HOST = '89.223.95.235'
 DB_NAME = 'shabilka_db'
 DB_USER = 'stuffman'
 DB_USER_PASSWORD = 'stuff'
