@@ -213,6 +213,19 @@ class Alpha(object):
         else:
             return False
 
+    def to_json_str(self):
+        d = dict(
+            text=self.text,
+            region=self.region,
+            universe=self.universe,
+            decay=self.decay,
+            delay=self.delay,
+            max_stock_weight=self.max_stock_weight,
+            neutralization=self.neutralization,
+            lookback_days=self.lookback_days
+        )
+        return json.dumps(d)
+
     def to_db(self, cursor, recipe):
         """
         Отправляет все данные связанные с альфой в базу данных.
@@ -234,26 +247,30 @@ class Alpha(object):
                 try:
                     query = \
                         """
-                        INSERT INTO alphas (md5hash, author, submittable, submitted, recipe_id, components) 
-                        VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{recipe_id}', '{components}')
+                        INSERT INTO alphas (md5hash, author, submittable, submitted, recipe_id, components, skeleton) 
+                        VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{recipe_id}', '{components}', '{skeleton}')
                         """.format(md5hash=self.hash,
                                    author=config.DB_USER,
                                    submittable=self.stats['submittable'],
                                    submitted=self.stats['submitted'],
                                    recipe_id=recipe.id,
-                                   components=json.dumps(self.components))
+                                   components=json.dumps(self.components),
+                                   skeleton=self.to_json_str()
+                                   )
                     if self.stats['submitted']:
                         query = \
                             """
-                            INSERT INTO alphas (md5hash, author, submittable, submitted, submitted_time, recipe_id, components) 
-                            VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{submitted_time}', '{recipe_id}', '{components}')
+                            INSERT INTO alphas (md5hash, author, submittable, submitted, submitted_time, recipe_id, components, skeleton) 
+                            VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{submitted_time}', '{recipe_id}', '{components}', '{skeleton}')
                             """.format(md5hash=self.hash,
                                        author=config.DB_USER,
                                        submittable=self.stats['submittable'],
                                        submitted=self.stats['submitted'],
                                        submitted_time=datetime.datetime.now(),
                                        recipe_id=recipe.id,
-                                       components=json.dumps(self.components))
+                                       components=json.dumps(self.components),
+                                       skeleton=self.to_json_str()
+                                       )
                     cursor.execute(query)
 
                     query = \
@@ -276,15 +293,15 @@ class Alpha(object):
                         """.format(alpha_id=alpha_id,
                                    year=stat['year'],
                                    fitness=stat['fitness'],
-                                   returns=stat['returns'],
+                                   returns=stat['returns'][:-1],
                                    sharpe=stat['sharpe'],
                                    long_count=stat['long_count'],
                                    short_count=stat['short_count'],
-                                   margin=stat['margin'],
-                                   turn_over=stat['turn_over'],
-                                   draw_down=stat['draw_down'],
-                                   booksize=stat['booksize'],
-                                   pnl=stat['pnl'],
+                                   margin=stat['margin'][:-3],
+                                   turn_over=stat['turn_over'][:-1],
+                                   draw_down=stat['draw_down'][:-1],
+                                   booksize=stat['booksize'][:-1],
+                                   pnl=stat['pnl'][:-1],
                                    left_corr=self.stats['left_corr'],
                                    right_corr=self.stats['right_corr'])
                         cursor.execute(query)
@@ -317,9 +334,9 @@ class Alpha(object):
         return \
             """
             Alpha object:
+            {text}
             {region}
             {universe}
-            {text}
             {delay}
             {decay}
             {max_stock_weight}
@@ -424,7 +441,7 @@ class WebSim(object):
             )
         return stats
 
-    def simulate_alpha(self, alpha):
+    def simulate_alpha(self, alpha, debug=False):
         """
         Симулирует одну альфу, выставляет настройки, вставляет текст, жмёт на нужные кнопки
         :param alpha: объект класса Alpha
@@ -448,18 +465,44 @@ class WebSim(object):
             max_stock_weight_input = self.driver.find_element_by_name('optrunc')
             sim_action_simulate = self.driver.find_element_by_class_name('sim-action-simulate')
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             input_form.click()
             set_input_action = ActionChains(self.driver)
             set_input_action.send_keys(alpha.text_str)
             set_input_action.perform()
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             settings_button.click()
             region_select.select_by_visible_text(alpha.region)
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             universe_select.select_by_visible_text(alpha.universe)
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             delay_select.select_by_visible_text(str(alpha.delay))
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             neutralization_select.select_by_visible_text(alpha.neutralization)
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             decay_input.clear()
             decay_input.send_keys(str(alpha.decay))
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             max_stock_weight_input.clear()
             max_stock_weight_input.send_keys(str(alpha.max_stock_weight))
             self.driver.execute_script('''
@@ -469,14 +512,23 @@ class WebSim(object):
             ''', backdays_hidden_value, str(alpha.lookback_days))
             settings_button.click()
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             sim_action_simulate.click()
             test_btn = self.driver.find_element_by_id('test-statsBtn')
             test_btn.click()
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
             corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
             action_get_corr = ActionChains(self.driver)
             action_get_corr.click(corr_button)
             action_get_corr.perform()
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
             corrs = dict()
             corr_block = self.driver.find_element_by_class_name('highcharts-series')
@@ -489,6 +541,9 @@ class WebSim(object):
                 else:
                     corrs[rect_id] = elem_height
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             left_corr_index = min(corrs.keys())
             right_corr_index = max(corrs.keys())
 
@@ -499,6 +554,9 @@ class WebSim(object):
             alpha.stats['left_corr'] = left_corr_value
             alpha.stats['right_corr'] = right_corr_value
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             """
             Структура столбцов корреляции
             https://s.mail.ru/FAbH/GwQ3NS9VZ
@@ -507,8 +565,16 @@ class WebSim(object):
             # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
             self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name(
                 'menu').find_elements_by_class_name('item')[3].click()
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             # жмём check submission
             self.driver.find_element_by_id('checkAlphaContainer').click()
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
             submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
             submittable_flag = False
             if 'success' in submittable.lower():
@@ -518,7 +584,13 @@ class WebSim(object):
             alpha.stats['submitted'] = False
             alpha.simulated = True
 
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+
         except NoSuchElementException as err:
+            print("Something went wrong...")
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
             if self._error(err):
                 pass
             else:

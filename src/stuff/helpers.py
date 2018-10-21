@@ -7,61 +7,16 @@ import itertools
 from websim import Alpha, Recipe
 
 
-class RoundRobin(object):
-    """
-    Бесконечный итератор по массиву
-    """
-
-    def __init__(self, arr):
-        assert isinstance(arr, list) or isinstance(arr,
-                                                   tuple), "To perform round robin you should pass array-like object"
-        self.arr = arr
-        self._to_yield_idx = 0
-        self._length = len(self.arr)
-
-    def __iter__(self):
-        self._to_yield_idx = 0
-        self._length = len(self.arr)
-        return self
-
-    def __next__(self):
-        i = self._to_yield_idx
-        self._to_yield_idx += 1
-        return self.arr[i % self._length]
+def return_dict_combinations(d):
+    assert isinstance(d, dict), "You should pass dictionary to init this object"
+    allNames = sorted(d)
+    combinations = itertools.product(*(d[name] for name in allNames))
+    res = []
+    for comb in combinations:
+        res.append(zip(allNames, comb))
+    return res
 
 
-class DictRoundRobin(object):
-    """
-    Возвращает все комбинации структуры типа {'a':[1,2], 'b':[3,4,5],...}
-    Когда все комбинации кончились выбрасывает StopIteration
-    """
-
-    def __init__(self, d):
-        assert isinstance(d, dict), "You should pass dictionary to init this object"
-        self.d = d
-        self._r = 0
-        self._robins = {}
-
-    def __iter__(self):
-        if self.d:
-            self._r = 1
-            for k, v in self.d.items():
-                self._r *= len(v)
-                self._robins[k] = RoundRobin(v)
-        self._idx = 0
-        return self
-
-    def __next__(self):
-        if self._idx < self._r:
-            to_return = []
-            for k, v in self._robins.items():
-                to_return.append((k, v.__next__()))
-            self._idx += 1
-            return to_return
-        else:
-            raise StopIteration
-
-# TODO: ещё раз разобраться с базовым гриндером
 class BasicGrinder(object):
     """
     Базовый гриндер.
@@ -84,13 +39,13 @@ class BasicGrinder(object):
 
     def __iter__(self):
         self._permutations = itertools.permutations(self.alphas, self.variables_number)
-        self._params = DictRoundRobin({}).__iter__()
+        self._params = [].__iter__()
         self._res = None
         self._idx = 0
         return self
 
     def _get_next_params(self):
-        params_combination = self._params.__next__()  # вылетает на первой итерации
+        params_combination = self._params.__next__()
         new_alpha_params_dict = dict(params_combination)
         new_alpha_params_dict['text'] = self._res
         new_alpha_params_dict['lookback_days'] = 512
@@ -101,6 +56,7 @@ class BasicGrinder(object):
         try:
             return Alpha(**self._get_next_params())
         except StopIteration:
+            print("BasicGrinder: beginning to work with new permutation")
             try:
                 alphas_permutation = self._permutations.__next__()
                 res = []
@@ -129,7 +85,8 @@ class BasicGrinder(object):
 
                 res += [self.recipe.template.format(**dict(zip(self.recipe.variables, new_vars)))]
                 self._res = res
-                self._params = DictRoundRobin(params).__iter__()
+                print(params)
+                self._params = return_dict_combinations(params).__iter__()
                 return Alpha(**self._get_next_params())
             except StopIteration as e:
                 print("Permutations ended, stopping")

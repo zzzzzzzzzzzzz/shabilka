@@ -50,14 +50,26 @@ if __name__=="__main__":
     websim = WebSim()
     if websim.login(relog=True):
         for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
-            print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:")
+            print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:" + bcolors.ENDC)
             print(new_alpha)
-            websim.simulate_alpha(new_alpha)
+            websim.simulate_alpha(new_alpha) # есть debug=True, который сохраняет скрины, помогают понять что произошло
+
+            if new_alpha.simulated:
+                print(bcolors.BOLD + bcolors.OKGREEN + "Alpha successfully simulated" + bcolors.ENDC)
+            else:
+                print(bcolors.BOLD + bcolors.FAIL + "Alpha is NOT simulated correctly" + bcolors.ENDC)
+
             with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD, config.DB_NAME) as cursor:
                 new_alpha.to_db(cursor, recipe)
+
             if new_alpha.stats['submittable']:
-                print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable")
+                print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable" + bcolors.ENDC)
             else:
-                print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable")
+                print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
+
+            """
+            Примерно здесь можно начинать реализовывать свою логику, альфа просимулирована, статы записаны, вперёд!
+            # your code here
+            """
     else:
-        print(bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance")
+        print(bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance" + bcolors.ENDC)
