@@ -88,7 +88,9 @@ class Alpha(object):
 
     NEUTRALIZATIONS = ['None', 'Market', 'Industry', 'Subindustry']
 
-    LOOKBACKS = ['25', '50', '128', '256', '384', '512']
+    PASTEURIZE = ['On', 'Off']
+
+    NANHANDLING = ['On', 'Off']
 
     alpha_stats = ['year', 'booksize', 'long_count', 'short_count', 'pnl', 'sharpe', 'fitness',
                    'returns', 'draw_down', 'turn_over', 'margin']
@@ -99,7 +101,10 @@ class Alpha(object):
         'year_by_year': []
     }
 
-    def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, lookback_days, text, components=[]):
+    ASSOCIATED_DB_TABLE = 'alphas'
+    ASSOCIATED_STATS_DB_TABLE = 'alphas_stats'
+
+    def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, pasteurize, nanhandling, text, components=[]):
         assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
         assert isinstance(universe, str), 'Universe of the alpha must be simple string HUUUMAN'
         assert isinstance(text, list), 'Text of the alpha must be list HUUUMAN'
@@ -107,7 +112,8 @@ class Alpha(object):
         assert isinstance(decay, int), 'Delay of the alpha must be simple integer HUUUMAN'
         assert isinstance(max_stock_weight, float) or isinstance(max_stock_weight, int), 'Max stock weight of the alpha must be simple float or integer like 0 HUUUMAN'
         assert isinstance(neutralization, str), 'Neutralization of the alpha must be simple string HUUUMAN'
-        assert isinstance(lookback_days, int), 'Lookback days must be simple integer HUUUMAN'
+        assert isinstance(pasteurize, str), 'Pasteurize must be simple str HUUUMAN'
+        assert isinstance(nanhandling, str), 'Nanhandling must be simple str HUUUMAN'
         assert isinstance(components, list), 'Components must be list type HUUUMAN'
 
         if region.upper() in Alpha.REGIONS_UNIVERSE:
@@ -145,11 +151,17 @@ class Alpha(object):
                                                                                                       str(
                                                                                                           Alpha.NEUTRALIZATIONS)))
 
-        if str(lookback_days) in Alpha.LOOKBACKS:
-            self.lookback_days = lookback_days
+        pasteurize = pasteurize.capitalize()
+        if pasteurize in Alpha.PASTEURIZE:
+            self.pasteurize = pasteurize
         else:
-            raise ValueError("Got unexpected lookback days value: {}. Possible values are {}".format(lookback_days, str(
-                Alpha.LOOKBACKS)))
+            raise ValueError("Got unexpected pasteurize value: {}. Possible values are {}".format(pasteurize, str(Alpha.PASTEURIZE)))
+
+        nanhandling = nanhandling.capitalize()
+        if nanhandling in Alpha.NANHANDLING:
+            self.nanhandling = nanhandling
+        else:
+            raise ValueError("Got unexpected nanhandling value: {}. Possible values are {}".format(nanhandling, str(Alpha.NANHANDLING)))
 
         self.simulated = False
         if components:
@@ -188,13 +200,14 @@ class Alpha(object):
         """
         return md5(
             (str(self.region) +
-            str(self.universe) +
-            str(self.text) +
-            str(self.delay) +
-            str(self.decay) +
-            str(self.max_stock_weight) +
-            str(self.neutralization) +
-            str(self.lookback_days)).encode('utf-8')
+             str(self.universe) +
+             str(self.text) +
+             str(self.delay) +
+             str(self.decay) +
+             str(self.max_stock_weight) +
+             str(self.neutralization) +
+             str(self.pasteurize) +
+             str(self.nanhandling)).encode('utf-8')
         ).hexdigest()
 
     def _check_db_existance(self, cursor):
@@ -222,7 +235,8 @@ class Alpha(object):
             delay=self.delay,
             max_stock_weight=self.max_stock_weight,
             neutralization=self.neutralization,
-            lookback_days=self.lookback_days
+            pasteurize=self.pasteurize,
+            nanhandling=self.nanhandling
         )
         return json.dumps(d)
 
@@ -341,7 +355,8 @@ class Alpha(object):
             {decay}
             {max_stock_weight}
             {neutralization}
-            {lookback_days}
+            {pasteurize}
+            {nanhandling}
             """.format(
                 region=self.region,
                 universe=self.universe,
@@ -350,7 +365,8 @@ class Alpha(object):
                 decay=self.decay,
                 max_stock_weight=self.max_stock_weight,
                 neutralization=self.neutralization,
-                lookback_days=self.lookback_days
+                pasteurize=self.pasteurize,
+                nanhandling=self.nanhandling
             )
 
 
@@ -376,6 +392,7 @@ class WebSim(object):
         options.add_argument('window-size=1366x768')
         self.driver = webdriver.Chrome(chrome_options=options,
                                        executable_path=config.CHROMEDRIVER_PATH)
+        self.implicitly_wait = implicitly_wait
         self.driver.implicitly_wait(
             implicitly_wait)  # будет ждать implicitly_wait секунд появления элемента на странице
         self.date = datetime.datetime.now().__str__().split()[0]
@@ -400,6 +417,12 @@ class WebSim(object):
                 self.driver.get('https://www.worldquantvrc.com/simulate')
 
             self.driver.get('https://www.worldquantvrc.com/login')
+            try:
+                self.driver.implicitly_wait(10)
+                self.driver.find_element_by_class_name('cookie-consent-accept').click()
+            except Exception:
+                print("Already signed cookie")
+            self.driver.implicitly_wait(self.implicitly_wait) # setting implicitly wait back
             log_pass = self.driver.find_elements_by_class_name('form-control')
             log_pass[0].clear(), log_pass[0].send_keys(config.EMAIL)
             log_pass[1].clear(), log_pass[1].send_keys(config.PASSWORD)
@@ -450,6 +473,9 @@ class WebSim(object):
         assert isinstance(alpha, Alpha), 'alpha must be Alpha class instance'
         try:
             self.driver.get('https://www.worldquantvrc.com/simulate')
+            self.driver.find_element_by_id("test-flowsexprCode") # switching to fast expressions
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
             input_form = self.driver.find_element_by_class_name('CodeMirror-line')
             # TODO: remove CodeMirror events from the input form. It substitutes symbols
             # self.driver.execute_script('''
@@ -460,7 +486,9 @@ class WebSim(object):
             universe_select = Select(self.driver.find_element_by_name('univid'))
             delay_select = Select(self.driver.find_element_by_name('delay'))
             neutralization_select = Select(self.driver.find_element_by_name('opneut'))
-            backdays_hidden_value = self.driver.find_element_by_name('backdays')  # not visible selector, custom field
+            pasteurize_select = Select(self.driver.find_element_by_name('pasteurize'))
+            nanhandling_select = Select(self.driver.find_element_by_name('nanhandling'))
+            # backdays_hidden_value = self.driver.find_element_by_name('backdays')  # not visible selector, custom field
             decay_input = self.driver.find_element_by_name('decay')
             max_stock_weight_input = self.driver.find_element_by_name('optrunc')
             sim_action_simulate = self.driver.find_element_by_class_name('sim-action-simulate')
@@ -497,6 +525,16 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
+            pasteurize_select.select_by_visible_text(alpha.pasteurize)
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now()) + '.png')
+
+            nanhandling_select.select_by_visible_text(alpha.nanhandling)
+
+            if debug:
+                self.driver.save_screenshot(str(datetime.datetime.now()) + '.png')
+
             decay_input.clear()
             decay_input.send_keys(str(alpha.decay))
 
@@ -505,11 +543,14 @@ class WebSim(object):
 
             max_stock_weight_input.clear()
             max_stock_weight_input.send_keys(str(alpha.max_stock_weight))
+            """
+            # no lookback for fast expressions
             self.driver.execute_script('''
                 var elem = arguments[0];
                 var value = arguments[1];
                 elem.value = value;
-            ''', backdays_hidden_value, str(alpha.lookback_days))
+            ''', backdays_hidden_value, "512") # old lookback_days option
+            """
             settings_button.click()
 
             if debug:

@@ -16,7 +16,8 @@
     "delay": 1,
     "max_stock_weight": 0.003,
     "neutralization": "market",
-    "lookback_days": 512
+    "pasteurize": "on",
+    "nanhandling": "off"
   },
   {
     "text": [
@@ -29,6 +30,7 @@
     "delay": 1,
     "max_stock_weight": 0.0,
     "neutralization": "subindustry",
-    "lookback_days": 512
+    "pasteurize": "on",
+    "nanhandling": "off"
   }
 ]

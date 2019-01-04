@@ -48,7 +48,6 @@ class BasicGrinder(object):
         params_combination = self._params.__next__()
         new_alpha_params_dict = dict(params_combination)
         new_alpha_params_dict['text'] = self._res
-        new_alpha_params_dict['lookback_days'] = 512
         new_alpha_params_dict['components'] = self._current_components
         return new_alpha_params_dict
 
@@ -68,6 +67,8 @@ class BasicGrinder(object):
                     'delay': [],
                     'max_stock_weight': [],
                     'neutralization': [],
+                    'pasteurize': [],
+                    'nanhandling': [],
                 }
                 self._current_components = []
                 for idx, alpha in enumerate(alphas_permutation):
