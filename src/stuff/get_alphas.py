@@ -92,7 +92,7 @@ if __name__ == '__main__':
             alpha_text = []
             for elem in websim.driver.find_elements_by_class_name('CodeMirror-line'):
                 line = elem.get_attribute('innerText')
-                if not re.match('\\u.+', line): # drop if find some strange unicode symbols
+                if not re.match('\\u.{4}', line): # drop if find some strange unicode symbols
                     line = re.sub('\/\/.+$', line, "") # removing comments
                     if line: # if it's not empty string
                         alpha_text.append(re.sub(line))

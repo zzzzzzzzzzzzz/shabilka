@@ -15,7 +15,7 @@
 
 import argparse
 
-from stuff.helpers import read_components, read_recipes, BasicGrinder, bcolors
+from stuff.helpers import read_components, read_recipes, BasicGrinder, bcolors, sendemail_via_gmail
 from websim import WebSim
 import pymysql
 import config
@@ -52,10 +52,15 @@ if __name__=="__main__":
         for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
             print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:" + bcolors.ENDC)
             print(new_alpha)
-            websim.simulate_alpha(new_alpha) # есть debug=True, который сохраняет скрины, помогают понять что произошло
+            mes = websim.simulate_alpha(new_alpha) # есть debug=True, который сохраняет скрины, помогают понять что произошло
 
             if new_alpha.simulated:
                 print(bcolors.BOLD + bcolors.OKGREEN + "Alpha successfully simulated" + bcolors.ENDC)
+                print("Left correlation border is {}".format(new_alpha.stats['left_corr']))
+                print("Right correlation border is {}".format(new_alpha.stats['right_corr']))
+                print("Resulting stats")
+                print(new_alpha.stats['year_by_year'][-1])
+                print(new_alpha.stats['classified'])
             else:
                 print(bcolors.BOLD + bcolors.FAIL + "Alpha is NOT simulated correctly" + bcolors.ENDC)
 
@@ -66,6 +71,11 @@ if __name__=="__main__":
                 print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable" + bcolors.ENDC)
             else:
                 print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
+
+            print("Websim said: {}".format(mes))
+
+            if new_alpha.stats['classified'] != 'INFERIOR':
+                sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
 
             """
             Примерно здесь можно начинать реализовывать свою логику, альфа просимулирована, статы записаны, вперёд!

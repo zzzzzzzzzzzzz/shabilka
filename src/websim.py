@@ -26,14 +26,25 @@ class Recipe(object):
     Переменные в template это просто именованные значения для функции .format().
     Например, {A} + {B} - две переменные А и B
     """
-    def __init__(self, id, template, description=""):
+    def __init__(self, id, template, description="", commutate=True):
         assert isinstance(id, str), "Id must be string HUUUMAN"
-        assert isinstance(template, str), "Template must be string HUUUMAN"
+        assert isinstance(template, list), "Template must be list HUUUMAN"
         assert isinstance(description, str), "Description must be string HUUUMAN"
+        assert isinstance(commutate, bool), "Commutate must be boolean HUUUMAN"
         self.id = id
         self.template = template
-        self.variables = [i[1] for i in Formatter().parse(template)]
+        self.commutate = commutate
+        self.variables = []
+        for row in template:
+            self.variables += [i[1] for i in Formatter().parse(row) if i[1]]
         self.description = description
+
+    @property
+    def row_template(self):
+        res = ""
+        for row in self.template:
+            res += row + '\n'
+        return res
 
     def _check_db_existance(self, cursor):
         """
@@ -61,8 +72,8 @@ class Recipe(object):
             try:
                 query = \
                     """
-                    INSERT INTO recipes (id, description, template) VALUES ('{id}', '{description}', '{template}')
-                    """.format(id=self.id, description=self.description, template=self.template)
+                    INSERT INTO recipes (id, commutate, description, template) VALUES ('{id}', {commutate}, '{description}', '{template}')
+                    """.format(id=self.id, commutate=self.commutate, description=self.description, template=self.row_template)
                 cursor.execute(query)
                 return True
             except Exception as e:
@@ -86,7 +97,7 @@ class Alpha(object):
                      'EUR': ['1', '0'],
                      'ASI': ['1']}
 
-    NEUTRALIZATIONS = ['None', 'Market', 'Industry', 'Subindustry']
+    NEUTRALIZATIONS = ['None', 'Market', 'Sector', 'Industry', 'Subindustry']
 
     PASTEURIZE = ['On', 'Off']
 
@@ -98,6 +109,7 @@ class Alpha(object):
     stats = {
         'submittable': False,
         'submitted': False,
+        'classified': 'INFERIOR',
         'year_by_year': []
     }
 
@@ -185,7 +197,7 @@ class Alpha(object):
         """
         res = ""
         for elem in self.text:
-            res += elem
+            res += elem + '   '
         return res
 
     @property
@@ -261,12 +273,14 @@ class Alpha(object):
                 try:
                     query = \
                         """
-                        INSERT INTO alphas (md5hash, author, submittable, submitted, recipe_id, components, skeleton) 
-                        VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{recipe_id}', '{components}', '{skeleton}')
-                        """.format(md5hash=self.hash,
+                        INSERT INTO {table} (md5hash, author, submittable, submitted, classified, recipe_id, components, skeleton) 
+                        VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{classified}', '{recipe_id}', '{components}', '{skeleton}')
+                        """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                                   md5hash=self.hash,
                                    author=config.DB_USER,
                                    submittable=self.stats['submittable'],
                                    submitted=self.stats['submitted'],
+                                   classified=self.stats['classified'],
                                    recipe_id=recipe.id,
                                    components=json.dumps(self.components),
                                    skeleton=self.to_json_str()
@@ -274,12 +288,14 @@ class Alpha(object):
                     if self.stats['submitted']:
                         query = \
                             """
-                            INSERT INTO alphas (md5hash, author, submittable, submitted, submitted_time, recipe_id, components, skeleton) 
-                            VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{submitted_time}', '{recipe_id}', '{components}', '{skeleton}')
-                            """.format(md5hash=self.hash,
+                            INSERT INTO {table} (md5hash, author, submittable, submitted, classified, submitted_time, recipe_id, components, skeleton) 
+                            VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{classified}', '{submitted_time}', '{recipe_id}', '{components}', '{skeleton}')
+                            """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                                       md5hash=self.hash,
                                        author=config.DB_USER,
                                        submittable=self.stats['submittable'],
                                        submitted=self.stats['submitted'],
+                                       classified=self.stats['classified'],
                                        submitted_time=datetime.datetime.now(),
                                        recipe_id=recipe.id,
                                        components=json.dumps(self.components),
@@ -289,8 +305,8 @@ class Alpha(object):
 
                     query = \
                     """
-                    SELECT id FROM alphas WHERE md5hash='{md5hash}'
-                    """.format(md5hash=self.hash)
+                    SELECT id FROM {table} WHERE md5hash='{md5hash}'
+                    """.format(table=Alpha.ASSOCIATED_DB_TABLE, md5hash=self.hash)
                     cursor.execute(query)
                     d = cursor.fetchone()
                     alpha_id = None
@@ -302,9 +318,10 @@ class Alpha(object):
                     for stat in self.stats['year_by_year']:
                         query = \
                         """
-                        INSERT INTO alphas_stats (alpha_id, year, fitness, returns, sharpe, long_count, short_count, margin, turn_over, draw_down, booksize, pnl, left_corr, right_corr)
+                        INSERT INTO {table} (alpha_id, year, fitness, returns, sharpe, long_count, short_count, margin, turn_over, draw_down, booksize, pnl, left_corr, right_corr)
                         VALUES ({alpha_id}, '{year}', {fitness}, {returns}, {sharpe}, {long_count}, {short_count}, {margin}, {turn_over}, {draw_down}, {booksize}, {pnl}, {left_corr}, {right_corr})
-                        """.format(alpha_id=alpha_id,
+                        """.format(table=Alpha.ASSOCIATED_STATS_DB_TABLE,
+                                   alpha_id=alpha_id,
                                    year=stat['year'],
                                    fitness=stat['fitness'],
                                    returns=stat['returns'][:-1],
@@ -330,10 +347,11 @@ class Alpha(object):
                     try:
                         query = \
                         """
-                        UPDATE alphas
+                        UPDATE {table}
                         SET submitted_time='{submitted_time}'
                         WHERE md5hash='{md5hash}'
-                        """.format(submitted_time=datetime.datetime.now(),
+                        """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                                   submitted_time=datetime.datetime.now(),
                                    md5hash=self.hash)
                         cursor.execute(query)
                     except Exception as e:
@@ -471,12 +489,13 @@ class WebSim(object):
         :return: ничего не возвращает, выкинет исключение в случае ошибки
         """
         assert isinstance(alpha, Alpha), 'alpha must be Alpha class instance'
+        alert_message = None
         try:
             self.driver.get('https://www.worldquantvrc.com/simulate')
-            self.driver.find_element_by_id("test-flowsexprCode") # switching to fast expressions
+            self.driver.find_element_by_id("test-flowsexprCode").click() # switching to fast expressions
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
-            input_form = self.driver.find_element_by_class_name('CodeMirror-line')
+            input_form = self.driver.find_element_by_class_name('CodeMirror-code')
             # TODO: remove CodeMirror events from the input form. It substitutes symbols
             # self.driver.execute_script('''
             #
@@ -504,7 +523,10 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
+            self.driver.find_element_by_id("test-flowsexprCode").click()
+
             settings_button.click()
+
             region_select.select_by_visible_text(alpha.region)
 
             if debug:
@@ -563,6 +585,12 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
+            alert_container = self.driver.find_element_by_class_name('sim-alert-container')
+
+            classified = self.driver.find_element_by_id('percentileStats').get_attribute('innerText').upper()
+            if classified:
+                alpha.stats['classified']=classified
+
             corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
             action_get_corr = ActionChains(self.driver)
             action_get_corr.click(corr_button)
@@ -616,10 +644,12 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
-            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
+            submittable = alert_container.get_attribute('innerText')
             submittable_flag = False
             if 'success' in submittable.lower():
                 submittable_flag = True
+            else:
+                alert_message = submittable # raise message why it's not submittable
 
             alpha.stats['submittable'] = submittable_flag
             alpha.stats['submitted'] = False
@@ -630,13 +660,18 @@ class WebSim(object):
 
         except NoSuchElementException as err:
             print("Something went wrong...")
-            if debug:
-                self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
-            if self._error(err):
-                pass
-            else:
-                print("Couldn't login again, it can be serious issue, stopping...")
-                exit(str(err))
+            alert_message = alert_container.get_attribute('innerText').replace(' ', '')
+            if not alert_message:
+                if debug:
+                    self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
+                if not self._error(err):
+                    print("Couldn't login again, it can be serious issue, stopping...")
+                    exit(str(err))
+
+        if debug:
+            self.driver.save_screenshot(str(datetime.datetime.now()) + '.png')
+
+        return alert_message
 
     def submit_alpha(self, alpha):
         """

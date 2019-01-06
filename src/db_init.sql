@@ -8,6 +8,7 @@ use shabilka_db;
 
 CREATE TABLE IF NOT EXISTS shabilka_db.recipes (
   id VARCHAR(255) PRIMARY KEY,
+  commutate BOOLEAN DEFAULT TRUE,
   description TEXT,
   template TEXT NOT NULL
 );
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS shabilka_db.alphas (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP(),
   submittable BOOLEAN DEFAULT FALSE,
   submitted BOOLEAN DEFAULT FALSE,
+  classified VARCHAR(30) DEFAULT 'INFERIOR',
   submitted_time DATETIME DEFAULT '1970-01-01 00:00:01',
   recipe_id VARCHAR(255),
   components json DEFAULT NULL,

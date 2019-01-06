@@ -38,7 +38,10 @@ class BasicGrinder(object):
         print("Number of variables {}".format(self.variables_number))
 
     def __iter__(self):
-        self._permutations = itertools.permutations(self.alphas, self.variables_number)
+        if not self.recipe.commutate:
+            self._permutations = itertools.permutations(self.alphas, self.variables_number)
+        else:
+            self._permutations = itertools.combinations(self.alphas, self.variables_number)
         self._params = [].__iter__()
         self._res = None
         self._idx = 0
@@ -53,7 +56,8 @@ class BasicGrinder(object):
 
     def _next(self):
         try:
-            return Alpha(**self._get_next_params())
+            new_alpha = Alpha(**self._get_next_params())
+            return new_alpha
         except StopIteration:
             print("BasicGrinder: beginning to work with new permutation")
             try:
@@ -84,19 +88,26 @@ class BasicGrinder(object):
                         if attr not in val:
                             params[key].append(attr)
 
-                res += [self.recipe.template.format(**dict(zip(self.recipe.variables, new_vars)))]
+                for row in self.recipe.template:
+                    res += [row.format(**dict(zip(self.recipe.variables, new_vars)))]
                 self._res = res
                 print(params)
                 self._params = return_dict_combinations(params).__iter__()
-                return Alpha(**self._get_next_params())
+                new_alpha = Alpha(**self._get_next_params())
+                return new_alpha
             except StopIteration as e:
                 print("Permutations ended, stopping")
                 raise e
-            except Exception as e:
-                print("Caught an exception during iteration. Stopping and writing the last index")
-                with open('../logs/' + self.__class__.__name__ + '_stopped_on.log', 'w') as f:
-                    f.write(str(self._idx))
-                raise e
+        except ValueError as e:
+            print("Incompaitable parameters")
+            print(str(e))
+            print("Skipping this alpha")
+            return self._next()
+        except Exception as e:
+            print("Caught an exception during iteration. Stopping and writing the last index")
+            with open('../logs/' + self.__class__.__name__ + '_stopped_on.log', 'w') as f:
+                f.write(str(self._idx))
+            raise e
 
     def __next__(self):
         while self._idx < self.begin_index:
@@ -136,6 +147,32 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def sendemail_via_gmail(gmail_user, gmail_password, to, subject, body):
+    assert isinstance(to, list), "to must be list of emails"
+    import smtplib
+
+    sent_from = gmail_user
+
+    email_text = """\  
+    From: %s  
+    To: %s  
+    Subject: %s
+
+    %s
+    """ % (sent_from, ", ".join(to), subject, body)
+
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.ehlo()
+        server.login(gmail_user, gmail_password)
+        server.sendmail(sent_from, to, email_text)
+        server.close()
+
+        print('Email sent!')
+    except:
+        print('Something went wrong during email notification sending')
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)

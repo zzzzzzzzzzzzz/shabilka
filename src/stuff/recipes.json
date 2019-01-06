@@ -2,11 +2,233 @@
   {
     "id": "stupid_sum",
     "description": "The first ultimate pattern",
-    "template": "{A} + {B}"
+    "commutate": true,
+    "template": ["{A} + {B}"]
   },
   {
     "id": "test_2",
     "description": "revenue/assets ещё никому не повредил",
-    "template": "{A} + {B} + revenue/assets"
+    "commutate": true,
+    "template": ["{A} + {B} + revenue/assets"]
+  },
+  {
+    "id": "2_scale_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1 = isnan(z) ? groupmean(z,market,1) : z;",
+      "z1"
+    ]
+  },
+  {
+    "id": "2_scale_and_groupmean_subindustry",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1 = isnan(z) ? groupmean(z,subindustry,1) : z;",
+      "z1"
+    ]
+  },
+  {
+    "id": "3_scale_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "z1 = isnan(z) ? groupmean(z,market,1) : z;",
+      "z1"
+    ]
+  },
+  {
+    "id": "4_scale_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C})+scale({D});",
+      "z1 = isnan(z) ? groupmean(z,market,1) : z;",
+      "z1"
+    ]
+  },
+  {
+    "id": "4_scale_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C})+scale({D});",
+      "z1 = isnan(z) ? groupmean(z,market,1) : z;",
+      "z1"
+    ]
+  },
+  {
+    "id": "2_scale_and_logsum",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1 = log(z/delay(z,126))+0.5*log(delay(z,126)/delay(z,252)) + 0.25*log(delay(z,252)/delay(z,378))+ 0.125*log(delay(z,378)/delay(z,504));",
+      "z1"
+    ]
+  },
+  {
+    "id": "3_scale_and_logsum",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "z1 = log(z/delay(z,126))+0.5*log(delay(z,126)/delay(z,252)) + 0.25*log(delay(z,252)/delay(z,378))+ 0.125*log(delay(z,378)/delay(z,504));",
+      "z1"
+    ]
+  },
+  {
+    "id": "2_scale_and_logsum_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1 = log(z/delay(z,126))+0.5*log(delay(z,126)/delay(z,252)) + 0.25*log(delay(z,252)/delay(z,378))+ 0.125*log(delay(z,378)/delay(z,504));",
+      "z2 = isnan(z1) ? groupmean(z1,market,1) : z1;",
+      "z2"
+    ]
+  },
+  {
+    "id": "3_scale_and_logsum_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "z1 = log(z/delay(z,126))+0.5*log(delay(z,126)/delay(z,252)) + 0.25*log(delay(z,252)/delay(z,378))+ 0.125*log(delay(z,378)/delay(z,504));",
+      "z2 = isnan(z1) ? groupmean(z1,market,1) : z1;",
+      "z2"
+    ]
+  },
+  {
+    "id": "4_scale_and_logsum_and_groupmean_market",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C})+scale({D});",
+      "z1 = log(z/delay(z,126))+0.5*log(delay(z,126)/delay(z,252)) + 0.25*log(delay(z,252)/delay(z,378))+ 0.125*log(delay(z,378)/delay(z,504));",
+      "z2 = isnan(z1) ? groupmean(z1,market,1) : z1;",
+      "z2"
+    ]
+  },
+  {
+    "id": "2_alphas_rank_correlation",
+    "description": "",
+    "commutate": false,
+    "template": [
+      "{A}*rank(correlation({A},delay({B},1),5))"
+    ]
+  },
+  {
+    "id": "returns_rank_correlation",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "{A}*rank(correlation(returns,delay({A},1),5))"
+    ]
+  },
+  {
+    "id": "2_scale_returns_rank_correlation",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z*rank(correlation(returns,delay(z,1),5))"
+    ]
+  },
+  {
+    "id": "magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "(rank({A})-0.5)^3"
+    ]
+  },
+  {
+    "id": "2_scale_and_magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "(rank(z)-0.5)^3"
+    ]
+  },
+  {
+    "id": "3_scale_and_magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "(rank(z)-0.5)^3"
+    ]
+  },
+  {
+    "id": "2_scale_returns_rank_correlation_and_magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1=z*rank(correlation(returns,delay(z,1),5));",
+      "(rank(z1)-0.5)^3"
+    ]
+  },
+  {
+    "id": "3_scale_and_cap_group_and_magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "mygroup = groupindex(cap,62,5);",
+      "z1 = isnan(z) ? groupmean(pasteurize(z),mygroup,1) : z;",
+      "(rank(z1)-0.5)^3"
+    ]
+  },
+  {
+    "id": "3_scale_and_cap_group_and_magic_and_rank_correlation",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "mygroup = groupindex(cap,62,5);",
+      "z1 = isnan(z) ? groupmean(pasteurize(z),mygroup,1) : z;",
+      "z2=z1*rank(correlation(returns,delay(z1,1),5));",
+      "(rank(z2)-0.5)^3"
+    ]
+  },
+  {
+    "id": "3_scale_and_market_group_and_magic_and_rank_correlation",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "z1 = isnan(z) ? groupmean(pasteurize(z),market,1) : z;",
+      "z2=z1*rank(correlation(returns,delay(z1,1),5));",
+      "(rank(z2)-0.5)^3"
+    ]
+  },
+  {
+    "id": "3_scale_and_market_group_and_magic_and_rank_correlation_liquidity_neutr",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B})+scale({C});",
+      "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+      "z1 = isnan(z) ? groupmean(pasteurize(z),market,1) : z;",
+      "z2=indneutralize(z1, 4*rank(liquid) + 0.5) * group_weight;",
+      "z3=z2*rank(correlation(returns,delay(z2,1),5));",
+      "(rank(z3)-0.5)^3"
+    ]
+  },
+  {
+    "id": "2_scale_rota_neutr",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "rota = ebit/assets;",
+      "indneutralize(scale({A})+scale({B}),rota+0.5)"
+    ]
   }
 ]
