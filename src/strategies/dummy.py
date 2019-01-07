@@ -52,7 +52,7 @@ if __name__=="__main__":
         for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
             print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:" + bcolors.ENDC)
             print(new_alpha)
-            mes = websim.simulate_alpha(new_alpha) # есть debug=True, который сохраняет скрины, помогают понять что произошло
+            mes = websim.simulate_alpha(new_alpha, debug=True) # есть debug=True, который сохраняет скрины, помогают понять что произошло
 
             if new_alpha.simulated:
                 print(bcolors.BOLD + bcolors.OKGREEN + "Alpha successfully simulated" + bcolors.ENDC)

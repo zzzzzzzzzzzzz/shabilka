@@ -269,8 +269,8 @@ DATA_WORDS = {
         "debt_st": {'usa', 'eur', 'asi'},
         "depre": {'eur', 'asi'},
         "depre_amort": {'usa', 'eur', 'asi'},
-        "EBIT": {'usa', 'eur', 'asi'},
-        "EBITDA": {'usa', 'eur', 'asi'},
+        "ebit": {'usa', 'eur', 'asi'},
+        "ebitda": {'usa', 'eur', 'asi'},
         "employee": {'usa', 'eur'},
         "enterprise_value": {'usa', 'eur'},
         "eps": {'usa', 'eur', 'asi'},
@@ -1491,7 +1491,7 @@ class Alpha(object):
 
             tmp = []
             for row in result:
-                tmp.append(row.sub(regex, var+suffix, row))
+                tmp.append(re.sub(regex, var+suffix, row))
 
             result = tmp
 
@@ -1689,8 +1689,10 @@ class WebSim(object):
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
             sim_action_simulate.click()
+            self.driver.implicitly_wait(300)
             test_btn = self.driver.find_element_by_id('test-statsBtn')
             test_btn.click()
+            self.driver.implicitly_wait(self.implicitly_wait)
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
