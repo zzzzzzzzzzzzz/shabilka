@@ -1,0 +1,4519 @@
+[
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP800",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "rank(assets/ebitda) + rank(revenue/assets)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.003,
+      "decay":10,
+      "text":[
+         "a1=-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "a2=0.011*(rank((vwap - close)) / rank((vwap + close))) + 2*rank(volume)/rank(adv20);",
+         "a3=ts_sum(rank(low)/rank(close)*rank(open)/rank(close), 3);",
+         "gross_margin = income/equity;",
+         "a4=scale(log(gross_margin/ts_delay(gross_margin, 230)));",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "roce = operating_income/(est_tot_assets-liabilities_curr);",
+         "a3=log(roce/ts_delay(roce, 160));",
+         "base =scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "alpha = log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)) + 0.25*log(ts_delay(debt,252)/ts_delay(debt,378))+ 0.125*log(ts_delay(debt,378)/ts_delay(debt,504));",
+         "a1=-alpha;",
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "alpha = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
+         "a2=group_neutralize(alpha, 4*rank(rota) + 0.5);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a3=group_neutralize(alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
+         "gross_margin = income/revenue;",
+         "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2=-group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a5=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+scale(a2)+2*scale(a5);",
+         "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),mygroup,1) : base;",
+         "base2 = (rank(base1)-0.5)^3;",
+         "a4=base2*rank(ts_corr(base2,ts_delay(base2,1),5));",
+         "base3 = is_nan(base2) ? a4+a1 : base2;",
+         "(rank(base3)-0.5)^3"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":63,
+      "text":[
+         "a1=ts_rank(cashflow_op/debt, 250) + ts_rank(income/debt_lt, 250);",
+         "alpha = group_neutralize(log(mdf_ibt_q/assets/ts_delay(mdf_ibt_q/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a2=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "gross_margin = income/revenue;",
+         "a3=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "a4=-group_neutralize(rank((est_sales-sales)/sales), 4*rank(current_ratio)+0.5)*(1-rank(sales - ts_delay(est_sales,63)));",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "a1=sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "gross_margin = income/revenue;",
+         "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "a3=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":40,
+      "text":[
+         "a1=-group_neutralize(rank((est_sales-sales)/sales), 4*rank(current_ratio)+0.5)*(1-rank(sales - ts_delay(est_sales,63)));",
+         "gross_margin = income/revenue;",
+         "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "alpha = (sales - cogs + depre_amort)/assets;",
+         "alpha1 = log(alpha/ts_delay(alpha, 210));",
+         "a3=rank(cap) >= 0.2 ? income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1) : nan;",
+         "month_return = close/ts_delay(close,20) - 1;",
+         "avg_12_months = (ts_delay(month_return,0)+ts_delay(month_return,20)+ts_delay(month_return,40)+ts_delay(month_return,60)+ts_delay(month_return,80)+ts_delay(month_return,100)+ts_delay(month_return,120)+ts_delay(month_return,140)+ts_delay(month_return,160)+ts_delay(month_return,180)+ts_delay(month_return,200)+ts_delay(month_return,220))/12;",
+         "market_portfolio = group_mean(month_return, market, 1);",
+         "beta = ts_regression(market_portfolio, month_return, 250, 0, 2);",
+         "alpha3 = abs(beta) > 0.5 ? rank(avg_12_months*beta) : 0;",
+         "a4=alpha3;",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
+         "gross_margin = income/revenue;",
+         "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "a1=alpha;",
+         "alpha = group_neutralize(log(pretax_income/assets/ts_delay(pretax_income/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a2=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "a3=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x =(income-dividend)/working_capital;",
+         "a1=log(x/ts_delay(x, 126)) + 0.5*log(ts_delay(x,126)/ts_delay(x, 252));",
+         "a2=rank(revenue/assets);",
+         "roic = (income - dividend)/invested_capital;",
+         "a3=log(roic/ts_delay(roic,252))*(1/ts_stddev(close,63));",
+         "a4=-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "a5=ts_sum(rank(low)/rank(close)*rank(open)/rank(close), 3);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4)+0.4*scale(a5);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "roce = operating_income/(est_tot_assets-liabilities_curr);",
+         "a2=log(roce/ts_delay(roce, 160));",
+         "alpha = group_neutralize(log(mdf_ibt_q/assets/ts_delay(mdf_ibt_q/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a3=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "a4=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "base = 0.6*scale(a2)+scale(a3) + 0.1*scale(a4);",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),market,1) : base;",
+         "pasteurize(base1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":200,
+      "text":[
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "roce = operating_income/(est_tot_assets-liabilities_curr);",
+         "a2=log(roce/ts_delay(roce, 160));",
+         "alpha = group_neutralize(log(mdf_ibt_q/assets/ts_delay(mdf_ibt_q/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a3=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "a4=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "base = 0.2*scale(a1)+0.9*scale(a2)+0.4*scale(a3)+0.666*scale(a4);",
+         "base1 = is_nan(base) ? group_mean(a1,subindustry,1) : a1;",
+         "pasteurize(base1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.01,
+      "decay":4,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "a1=group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
+         "a2=ts_sum(rank(low)/rank(close)*rank(open)/rank(close), 3);",
+         "a3=(-(close-ts_delay(close,5))/ts_delay(close,5)+volume/adv20)/ts_stddev(close,20);",
+         "a4=scale(scale(ts_rank(cashflow_op/debt, 250)) + scale(ts_rank(income/debt_lt, 250)) + scale(rank(revenue/assets)));",
+         "base = scale(a1)+scale(a2)+1.5*scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.15,
+      "decay":0,
+      "text":[
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "gross_margin = income/revenue;",
+         "alpha = log(gross_margin/ts_delay(gross_margin,126)) + 0.5*log(ts_delay(gross_margin,126)/ts_delay(gross_margin,252)) + 0.25*log(ts_delay(gross_margin,252)/ts_delay(gross_margin,378)) + 0.125*log(ts_delay(gross_margin,378)/ts_delay(gross_margin,504));",
+         "a1=group_neutralize(alpha, 4*rank(liquid) + 0.5) * group_weight;",
+         "gross_margin = income/equity;",
+         "a2=scale(log(gross_margin/ts_delay(gross_margin, 230)));",
+         "a3 = -rank(equity^2)/rank(equity + debt);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "a1=group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
+         "a2=ts_sum(rank(low)/rank(close)*rank(open)/rank(close), 3);",
+         "base = scale(a1)+scale(a2);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20);",
+         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a3 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a4=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "yearmax = argmax(cap, 250);",
+         "alpha = yearmax - ts_delay(yearmax,250);",
+         "a5=-alpha/ts_stddev(cap,150);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4)+0.1*scale(a5);",
+         "base1 = is_nan(base) ? group_mean(base,industry,1) : base;",
+         "a1=(rank(base1)-0.2)^3;",
+         "a2=group_neutralize(volume/adv20, sales/assets);",
+         "roce = operating_income/(est_tot_assets-liabilities_curr);",
+         "a3=log(roce/ts_delay(roce, 160));",
+         "base2 = scale(a1)+scale(a2)+scale(a3);",
+         "base3 = is_nan(base2) ? group_mean(base2,market,1) : base2;",
+         "base3"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "a2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close));",
+         "roce = operating_income/(est_tot_assets-liabilities_curr);",
+         "a3=log(roce/ts_delay(roce, 160));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.01,
+      "decay":21,
+      "text":[
+         "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20);",
+         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a3 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a4=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "yearmax = argmax(cap, 250);",
+         "alpha = yearmax - ts_delay(yearmax,250);",
+         "a5=-alpha/ts_stddev(cap,150);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4)+0.1*scale(a5);",
+         "base1 = is_nan(base) ? group_mean(base,industry,1) : base;",
+         "(rank(base1)-0.2)^3"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=rank(ts_covariance(return_assets,group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a2=group_neutralize(alpha,ebit/assets + 0.5);",
+         "a3=ts_delta(rank(sales/assets), 252);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "alpha = ts_rank(cashflow_op/debt, 250) + ts_rank(income/debt_lt, 250);",
+         "a1=rank(1/cap) < 0.8 ? rank(alpha) : nan;",
+         "a2 = rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets);",
+         "a3 = -rank((close-ts_delay(close,5))/ts_delay(close,5))+rank(volume)/rank(adv20);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a4=group_neutralize(alpha, 5 * rank(neutr) + 0.5);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "a1=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "alpha = group_neutralize(log(mdf_ibt_q/assets/ts_delay(mdf_ibt_q/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a2=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "a3 = (-(close-ts_delay(close,5))/ts_delay(close,5)+volume/adv20)/ts_stddev(close,20);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,subindustry,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":21,
+      "text":[
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a1=group_neutralize(alpha,ebit/assets + 0.5);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2 = group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+-0.5*scale(a2);",
+         "a3 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "a4=group_neutralize(volume/adv20, sales/assets);",
+         "a5 = ts_rank(volume/sharesout,5);",
+         "base = 1.5*scale(a1)+2*scale(a2) + 0.5*scale(a3)+scale(a4)+3*scale(a5);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a3=log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "x= income/equity;",
+         "a1= log(x/ts_delay(x, 378));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":120,
+      "text":[
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2 = group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.01,
+      "decay":0,
+      "text":[
+         "alpha = log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)) + 0.25*log(ts_delay(debt,252)/ts_delay(debt,378))+ 0.125*log(ts_delay(debt,378)/ts_delay(debt,504));",
+         "a1=-alpha;",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2= group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+scale(a2);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "month_return = close/ts_delay(close,20) - 1;",
+         "avg_12_months = (ts_delay(month_return,0)+ts_delay(month_return,20)+ts_delay(month_return,40)+ts_delay(month_return,60)+ts_delay(month_return,80)+ts_delay(month_return,100)+ts_delay(month_return,120)+ts_delay(month_return,140)+ts_delay(month_return,160)+ts_delay(month_return,180)+ts_delay(month_return,200)+ts_delay(month_return,220))/12;",
+         "market_portfolio = group_mean(month_return, market, 1);",
+         "beta = ts_regression(market_portfolio, month_return, 250, 0, 2);",
+         "alpha = abs(beta) > 0.5 ? rank(avg_12_months*beta) : 0;",
+         "a4 = alpha;",
+         "base = scale(a1)+-0.5*scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "a3 = base1;",
+         "base = scale(pasteurize(a1))+scale(pasteurize(a2))+scale(pasteurize(a3))+scale(pasteurize(a4));",
+         "x = scale(pasteurize(a3));",
+         "base2 = is_nan(base) ? x*rank(ts_corr(returns,ts_delay(x,1),10)) : base;",
+         "base2"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a3=log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252));",
+         "base = scale(pasteurize(a1))+scale(pasteurize(a2))+scale(pasteurize(a3));",
+         "x = scale(pasteurize(a3));",
+         "base1 = is_nan(base) ? x*rank(ts_corr(returns,ts_delay(x,1),10)) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20);",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "rota = ebit/assets;",
+         "ratio_alpha = income/equity;",
+         "alpha = group_neutralize(rank(ratio_alpha/ts_delay(ratio_alpha,252)-1),rota + 0.5);",
+         "a3=alpha;",
+         "base = scale(pasteurize(a1))+scale(pasteurize(a2))+scale(pasteurize(a3));",
+         "grmean = group_mean(pasteurize(base), market, 1);",
+         "base1 = is_nan(base) ? grmean*rank(ts_corr(returns,ts_delay(grmean,1),10)) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":196,
+      "text":[
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a3=log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252));",
+         "base = scale(pasteurize(a1))+scale(pasteurize(a2))+scale(pasteurize(a3));",
+         "base1 = is_nan(base) ? scale(pasteurize(a3)) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":200,
+      "text":[
+         "gross_income = revenue - cogs;",
+         "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "alpha = 1/(mdf_oin + 0.001);",
+         "neutr = ts_sum(revenue / assets, 55);",
+         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "base = scale(a1)+-0.5*scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "rota = ebit/assets;",
+         "roic = (income - dividend)/invested_capital;",
+         "roic_alpha = log(roic/ts_delay(roic,126)) + 0.3*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.09*log(ts_delay(roic,252)/ts_delay(roic,378))+0.027*log(ts_delay(roic,378)/ts_delay(roic,504));",
+         "alpha2 = group_neutralize(roic_alpha,rota + 0.5);",
+         "a3 = alpha2;",
+         "a4 = -rank((close-ts_delay(close,5))/ts_delay(close,5))+rank(volume)/rank(adv20);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "(rank(base1)-0.5)^3"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "alpha=-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "a2 =rank(sector) <= 0.15 || rank(sector) >= 0.25 ? alpha*rank(ts_corr(returns,ts_delay(alpha,1),5)) : nan;",
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a3 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = scale(scale(ts_rank(cashflow_op/debt, 250)) + scale(ts_rank(income/debt_lt, 250)) + scale(rank(revenue/assets)));",
+         "roic = (income - dividend)/invested_capital;",
+         "a3=log(roic/ts_delay(roic,252))* (1/ts_stddev(close,63));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = -group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "alpha = (sales - cogs + depre_amort)/assets;",
+         "alpha2 = log(alpha/ts_delay(alpha, 210));",
+         "a3 = rank(cap) >= 0.2 ? income != ts_delay(income, 10) ? alpha2 : 0.9 * ts_delay(alpha2, 1) : nan;",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a2 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "x = (revenue-cogs-operating_expense-interest_expense)/revenue;",
+         "a3 = log(pretax_income/ts_delay(pretax_income,126))+0.5*log(ts_delay(pretax_income,126)/ts_delay(pretax_income,252));",
+         "x = (cash + invested_capital+retained_earnings)/liabilities_curr ;",
+         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "rota = ebit/assets;",
+         "a4 = group_neutralize(alpha,rota+0.5);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "meanrota = ts_sum(ebit/assets,21)/21;",
+         "neutr = 2*rank(current_ratio)+0.5;",
+         "inc = income==income ? income : group_mean(income,neutr,1);",
+         "div = dividend==dividend ? dividend : group_mean(dividend, neutr,1);",
+         "invc = invested_capital==invested_capital ? invested_capital : group_mean(invested_capital,neutr,1);",
+         "roic = (inc - div)/invc;",
+         "alpha = log(roic/ts_delay(roic,126))+0.2*log(ts_delay(roic,126)/ts_delay(roic,252))+ log(sales/ts_delay(sales,126)) + 0.2*log(ts_delay(sales,126)/ts_delay(sales,252)) + 0.125*log(ts_delay(sales,252)/ts_delay(sales,378));",
+         "alpha1 = rank(1/cap) >= 0.6 ? 1.1*alpha : 0.9*alpha;",
+         "a2 = group_neutralize((rank(alpha1)-0.5)^3, neutr);",
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "base = scale(a1) + scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1*rank(ts_corr(base1,ts_delay(base1,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a2 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "base = scale(a1)+scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":20,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2= ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "base = scale(a1)+scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1*rank(ts_corr(base1,ts_delay(base1,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "rota = ebit/assets;",
+         "a2 = group_neutralize(-ts_count_nans(cashflow_dividends,378) + scale(revenue/assets),rota+0.5);",
+         "a3 = -group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "alpha = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
+         "a2 = group_neutralize(alpha, 4*rank(rota) + 0.5);",
+         "a3= -rank(equity^2)/rank(equity + debt);",
+         "rota = ebit/assets;",
+         "ratio = income/equity;",
+         "ratio_alpha = log(ratio/ts_delay(ratio,126)) + 0.5*log(ts_delay(ratio,126)/ts_delay(ratio,252)) + 0.25*log(ts_delay(ratio,252)/ts_delay(ratio,378)) + 0.125*log(ts_delay(ratio,378)/ts_delay(ratio,502));",
+         "alpha = group_neutralize(ratio_alpha,rota + 0.5);",
+         "a4 = alpha;",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "a2 = group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
+         "base = scale(a1)+scale(a2);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "rank(base1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2=-group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "a3= -rank(equity^2)/rank(equity + debt);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Industry",
+      "max_stock_weight":0.001,
+      "decay":378,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = ts_rank(volume/sharesout,5);",
+         "a = is_nan(a1) ? group_neutralize(a2,subindustry) : group_neutralize(a1,industry);",
+         "a*rank(ts_corr(returns,ts_delay(a,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":14,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2=-group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "base = scale(a1)+scale(a2);",
+         "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),mygroup,1) : base;",
+         "base2 = (rank(base1)-0.5)^3;",
+         "base2*rank(ts_corr(base2,ts_delay(base2,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2=ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.7, 10);",
+         "base = scale(a1)+scale(a2);",
+         "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),mygroup,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":62,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = -close/vwap;",
+         "a = is_nan(a1) ? group_neutralize(a2,subindustry) : group_neutralize(a1,industry);",
+         "group_neutralize((rank(a)-0.5)^3,(industry+subindustry)/2)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Industry",
+      "max_stock_weight":0.001,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))-ts_count_nans(cashflow_dividends,400);",
+         "base = scale(a1)+scale(a2);",
+         "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
+         "base1 = is_nan(base) ? group_mean(pasteurize(base),market,1) : base;",
+         "rank(base1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.001,
+      "decay":10,
+      "text":[
+         "alpha = pasteurize((sales - cogs)/mdf_ass / mdf_cse_q);",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "alpha = rank(log(inventory_turnover/ts_delay(inventory_turnover, 250)));",
+         "alpha2 = group_neutralize(alpha, rank(sales));",
+         "gr = group_rank(rank(sales), alpha2);",
+         "alpha3 = (gr >= 0.7 || gr <= 0.2 ? alpha2 : group_mean(alpha2, rank(sales), 1));",
+         "a2 = alpha3 == alpha3 ? alpha3: 0;",
+         "base = scale(a1)+scale(a2);",
+         "rank(base)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":62,
+      "text":[
+         "alpha = pasteurize((sales - cogs)/mdf_ass / mdf_cse_q);",
+         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "a2 = (ts_rank((volume / adv20), 20) * ts_rank((-ts_delta(close, 7)), 8))+0.3*rank(volume)/rank(adv20);",
+         "is_nan(a1) ? group_neutralize(a2,subindustry) : group_neutralize(a1,industry)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.01,
+      "decay":125,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "a1 = group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
+         "a2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close));",
+         "month_return = close/ts_delay(close,20) - 1;",
+         "delay_month_return = ts_delay(month_return, 235);",
+         "a3 = rank(delay_month_return) + 2*rank(volume/adv20);",
+         "direction = ts_delta(close,9);",
+         "volatility = ts_delay(abs(ts_delta(close,1)),0)+ts_delay(abs(ts_delta(close,1)),1)+ts_delay(abs(ts_delta(close,1)),2)+ts_delay(abs(ts_delta(close,1)),3)+ts_delay(abs(ts_delta(close,1)),4)+ts_delay(abs(ts_delta(close,1)),5)+ts_delay(abs(ts_delta(close,1)),6)+ts_delay(abs(ts_delta(close,1)),7)+ts_delay(abs(ts_delta(close,1)),8)+ts_delay(abs(ts_delta(close,1)),9);",
+         "effy = abs(direction)/volatility;",
+         "fastest = 2/3;",
+         "slowest = 2/31;",
+         "smooth = effy*(fastest-slowest)+slowest;",
+         "c = smooth^2;",
+         "ama0 = ts_delay(c*close,10);",
+         "ama1 = ts_delay(c*close,9) + ts_delay(1-c,9)*ama0;",
+         "ama2 = ts_delay(c*close,8) + ts_delay(1-c,8)*ama1;",
+         "ama3 = ts_delay(c*close,7) + ts_delay(1-c,7)*ama2;",
+         "ama4 = ts_delay(c*close,6) + ts_delay(1-c,6)*ama3;",
+         "ama5 = ts_delay(c*close,5) + ts_delay(1-c,5)*ama4;",
+         "ama6 = ts_delay(c*close,4) + ts_delay(1-c,4)*ama5;",
+         "ama7 = ts_delay(c*close,3) + ts_delay(1-c,3)*ama6;",
+         "ama8 = ts_delay(c*close,2) + ts_delay(1-c,2)*ama7;",
+         "ama9 = ts_delay(c*close,1) + ts_delay(1-c,1)*ama8;",
+         "ama = c*close + (1-c)*ama9;",
+         "a4 = scale(scale(trade_when(close - ama > 0, close-ama, sign(close -ama) != ts_delay(sign(close-ama), 1))) + scale(rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets)));",
+         "base = scale(a1)+scale(a2)+scale(a3)+0.3*scale(a4);",
+         "base*rank(ts_corr(returns,ts_delay(base,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":500,
+      "text":[
+         "yearmax = argmax(cap, 250);",
+         "alpha = yearmax - ts_delay(yearmax,250);",
+         "a1 = -alpha/ts_stddev(cap,150);",
+         "roic = (income - dividend)/invested_capital;",
+         "a2 = log(roic/ts_delay(roic,252))* (1/ts_stddev(close,63));",
+         "a3 = -group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "a4 = rank(revenue/assets);",
+         "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
+         "mygroup = bucket(rank(mdf_cap), range='0, 1, 0.02');",
+         "group_neutralize(base,mygroup)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":125,
+      "text":[
+         "rota = ebit/assets;",
+         "ratio = income/equity;",
+         "ratio_alpha = log(ratio/ts_delay(ratio,126)) + 0.5*log(ts_delay(ratio,126)/ts_delay(ratio,252)) + 0.25*log(ts_delay(ratio,252)/ts_delay(ratio,378)) + 0.125*log(ts_delay(ratio,378)/ts_delay(ratio,502));",
+         "a1 = group_neutralize(ratio_alpha,rota + 0.5);",
+         "a2 = -rank(equity^2)/rank(equity + debt);",
+         "gross = revenue - cogs;",
+         "alpha = gross/assets;",
+         "gr = group_rank(market, alpha);",
+         "alpha1 = group_neutralize(log(alpha/ts_delay(alpha, 200)), rank(ppent));",
+         "a3 = revenue != ts_delay(revenue, 15) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "base1 = is_nan(base) ? group_mean(base,market,1) :base;",
+         "base2 = x < 1.2 && x > 0.8 ? nan : base1;",
+         "mygroup = bucket(rank(mdf_cap), range='0, 1, 0.02');",
+         "chpok = (rank(base2)-0.5)^3;",
+         "group_neutralize(chpok*rank(ts_corr(returns,ts_delay(chpok,1),5)),mygroup)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "subj = income/equity;",
+         "alpha = log(subj/ts_delay(subj, 126)) + 0.2*log(ts_delay(subj,126)/ts_delay(subj, 252));",
+         "rota = ebit/assets;",
+         "alpha1 = rank(1/cap) <= 0.6 && rank(1/cap) >= 0.4 ? (rank(alpha) - 0.5)^3 : 0;",
+         "a1 = group_neutralize(alpha1, 5*rank(rota)+0.5);",
+         "rota = ebit/assets;",
+         "csh = cash==cash ? cash : 0;",
+         "lblts = liabilities_curr==liabilities_curr ? liabilities_curr : group_mean(liabilities_curr,5*rank(rota)+0.5,1);",
+         "rer = retained_earnings==retained_earnings ? retained_earnings : 0;",
+         "x = (csh +rer)/lblts;",
+         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "a2= group_neutralize(alpha,5*rank(rota)+0.5);",
+         "gross_margin = (revenue-cogs)/revenue;",
+         "a3 = rank(ts_delta(current_ratio,80)/ts_delay(current_ratio,80)) +",
+         "0.5*rank(log(gross_margin/ts_delay(gross_margin,250)));",
+         "rota = ebit/assets;",
+         "ratio = income/equity;",
+         "ratio_alpha = log(ratio/ts_delay(ratio,126)) + 0.5*log(ts_delay(ratio,126)/ts_delay(ratio,252)) + 0.25*log(ts_delay(ratio,252)/ts_delay(ratio,378)) + 0.125*log(ts_delay(ratio,378)/ts_delay(ratio,502));",
+         "a4= group_neutralize(ratio_alpha,rota + 0.5);",
+         "base = scale(a1)+2*scale(a2)+scale(a3)+5*scale(a4);",
+         "mygroup = bucket(rank(sales/assets), range='0, 1, 0.02');",
+         "group_neutralize(base*rank(ts_corr(returns,ts_delay(base,1),5)),mygroup)*(1+mygroup)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":62,
+      "text":[
+         "weight = (rank(est_rd_expense/bookvalue_ps));",
+         "rota = ebit/assets;",
+         "alpha = group_neutralize(weight, 5*rank(rota)+0.5);",
+         "alpha1 = (bookvalue_ps == ts_delay(bookvalue_ps, 10) ? 0.9 * ts_delay(alpha, 1) : alpha);",
+         "a1 = alpha1 ? alpha1 : 0;",
+         "a2 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "rota = ebit/assets;",
+         "roic = (income - dividend)/invested_capital;",
+         "roic_alpha = log(roic/ts_delay(roic,126)) + 0.3*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.09*log(ts_delay(roic,252)/ts_delay(roic,378))+0.027*log(ts_delay(roic,378)/ts_delay(roic,504));",
+         "a3 = group_neutralize(roic_alpha,rota + 0.5);",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "gross_income = mdf_rev_q - cogs;",
+         "subj1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "subj2 = rank(1/cap) <= 0.2 ? 1.2*subj1 : 0.9*subj1;",
+         "alpha = x < 1.3 && x > 0.7 ? nan : subj2;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "a4 = group_neutralize(alpha*rank(ts_corr(returns, ts_delay(alpha,1),5)), 5*rank(meancap)+0.5);",
+         "base = scale(a2)+scale(a3)+scale(a4);",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "a1 = scale(log(return_assets/ts_delay(return_assets,126)) + log(return_equity/ts_delay(return_equity,126)));",
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "a3 = -group_neutralize(rank((est_sales-sales)/sales), 4*rank(ebit/assets)+0.5)*(1-rank(sales - ts_delay(est_sales,63)));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "mygroup = bucket(rank(mdf_cap), range='0, 1, 0.02');",
+         "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.001,
+      "decay":196,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "gross_income = mdf_rev_q - cogs;",
+         "subj1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "subj2 = rank(1/cap) <= 0.2 ? 1.2*subj1 : 0.9*subj1;",
+         "alpha = x < 1.3 && x > 0.7 ? nan : subj2;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "a1 = group_neutralize(alpha*rank(ts_corr(returns, ts_delay(alpha,1),5)), 5*rank(meancap)+0.5);",
+         "gross_margin = (revenue-cogs)/revenue;",
+         "a2 = ts_rank(gross_margin,252)*rank(revenue/assets);",
+         "a3 = rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets);",
+         "base = scale(a1)*2 + scale(a2)+scale(a3);",
+         "mygroup = bucket(rank(mdf_cap), range='0, 1, 0.02');",
+         "group_neutralize(base,mygroup)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.001,
+      "decay":30,
+      "text":[
+         "lala = (income-dividend)/working_capital;",
+         "alp=log (lala/ts_delay(lala, 252));",
+         "lalala = -income/mdf_ass+revenue/mdf_ass;",
+         "alph=log (lalala/ts_delay(lalala, 183));",
+         "neutr = (income-dividend)/sharesout;",
+         "group_neutralize (scale(alp * rank(scale(ts_delta(close, 63))/ts_delta(alp, 63))) + 3.5*scale(alph), 5 * rank (neutr) + 0.5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":5,
+      "text":[
+         "alpha1 = log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252));",
+         "alpha2 = -(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "alpha11 = alpha1==alpha1 ? alpha1 : group_mean(alpha1, market,1);",
+         "alpha22 = alpha2==alpha2 ? alpha2 : group_mean(alpha2, market,1);",
+         "a1 = scale(alpha11) + scale(alpha22);",
+         "a2 = scale(log(return_equity/ts_delay(return_equity,252)));",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "h = ts_max((high+low)/2,100);",
+         "l = ts_min((high+low)/2,100);",
+         "subj = close < l ? rank(close*volume) : close > h ? -rank(close*volume) : rank(volume)/rank(adv20);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "a3 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
+         "base=0.7*scale(a1)+scale(a2)+scale(a3);",
+         "mygroup = bucket(rank(pasteurize(sales/assets)), range='0, 1, 0.02');",
+         "group_neutralize(is_nan(base) ? 0 : base,mygroup)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "rota = ebit/assets;",
+         "csh = cash==cash ? cash : 0;",
+         "incp = invested_capital==invested_capital ? invested_capital : 0;",
+         "lblts = liabilities_curr==liabilities_curr ? liabilities_curr : group_mean(liabilities_curr,5*rank(rota)+0.5,1);",
+         "rer = retained_earnings==retained_earnings ? retained_earnings : 0;",
+         "x = (csh + incp+rer)/lblts;",
+         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "a1 = group_neutralize(alpha,5*rank(rota)+0.5);",
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "a3 = group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? 0 : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "a1 = -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))-ts_count_nans(cashflow_dividends,400);",
+         "x =(income-dividend)/working_capital;",
+         "a2 = log(x/ts_delay(x, 126)) + 0.5*log(ts_delay(x,126)/ts_delay(x, 252));",
+         "a3 = -group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "base = scale(a1)+scale(a2)+scale(a3);",
+         "base1 = is_nan(base) ? 0 : base;",
+         "base1"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "a1 = ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5);",
+         "a2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "a3 =(rank((sign(ts_delta(volume, 1)) * (-1 * ts_delta(close, 1))/power(volume, 1.3))+rank (ts_sum((high+low)/2-close, 5)))*power (rank(volume)/rank(adv20), 1.21))/(1+0.15*rank (max (high-low, max (abs (ts_delay(close, 1)-high), abs (ts_delay(close, 1)-low)))));",
+         "x = snt_ratio==snt_ratio ? snt_ratio : 2;",
+         "a4 = x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 0.95, 8);",
+         "mygroup = bucket(rank(pasteurize(mdf_cap)), range='0, 1, 0.02');",
+         "yee = scale(a1)+scale(a2)+scale(a2)+scale(a4);",
+         "group_neutralize((rank(yee)-0.5)^3,mygroup)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "a1 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
+         "a2 = rank(((1 - rank((ts_stddev(returns, 2) / ts_stddev(returns, 5)))) + (1 - rank(ts_delta(close, 1)))))+0.55*rank(volume)/rank(adv20);",
+         "a3 = -rank(close)/rank(vwap) - 0.01*rank(((((-1 * returns) * adv20) * vwap) * (high - close)));",
+         "res = scale(a1)+scale(a2)+scale(a3);",
+         "res*rank(ts_corr(returns,ts_delay(res,1),21))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":4,
+      "text":[
+         "a1 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21);",
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "alpha = subj;",
+         "a2 = alpha;",
+         "res = scale(a1)+scale(a2);",
+         "res*rank(ts_corr(returns,ts_delay(res,1),10))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":2,
+      "text":[
+         "al1 = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
+         "a1=ts_decay_exp_window(al1,0.6,5);",
+         "a2 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20),0.6, 21);",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = rank(volume)/rank(adv20);",
+         "a3 = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "a4=a3*rank(ts_corr(returns,ts_delay(a3,1),5));",
+         "res = scale(a1)+scale(a2)+scale(a4);",
+         "res*rank(ts_corr(returns,ts_delay(res,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":4,
+      "text":[
+         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
+         "subj1 = ts_decay_exp_window(alpha,0.6,5);",
+         "subj2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close))*(1+2*rank (correlation (est_sales, sales, 5)));",
+         "subj3 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21);",
+         "a = 2*scale(subj1)+scale(subj2)+3*scale(subj3);",
+         "a1 = is_nan(a) ? 0 : a;",
+         "a1*rank(ts_corr(returns,ts_delay(a1,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "h = ts_max((high+low)/2,100);",
+         "l = ts_min((high+low)/2,100);",
+         "subj = close < l ? rank(close*volume) : close > h ? -rank(close*volume) : rank(volume)/rank(adv20);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "subj1 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
+         "subj2 = rank(volume)/rank(adv20);",
+         "subj11 = is_nan(subj1) ? 0 : subj1;",
+         "subj22 = is_nan(subj2) ? 0 : subj2;",
+         "subj3 = ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 0.5,5);",
+         "subj33 = is_nan(subj3) ? 0 : subj3;",
+         "a = scale(subj11)+scale(subj22) + scale(subj33);",
+         "a*rank(ts_corr(returns,ts_delay(a,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "alpha = ts_rank(volume*rank((high+low)/2 - close), 10);",
+         "subj=alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
+         "alpha = x < 1.2 && x > 0.8 ? nan : subj;",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "a1 = -group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
+         "x = (sales-cogs)/sales;",
+         "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
+         "subj = rank(1/cap)<0.8 ? 1.05*alpha : 0.95*alpha;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "meanrota = ts_sum(mdf_rac,21)/21;",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "alpha2 = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "a2=group_neutralize(subj*rank(ts_corr(returns,ts_delay(subj,1),5))*(1+rank(ts_skewness(returns, 252))), 5*rank(meanrota)+0.5);",
+         "a11 = a1 == a1 ? a1 : group_mean(a1,market,1);",
+         "a22 = a2 == a2 ? a2 : group_mean(a2,market,1);",
+         "scale(a11)+scale(a22)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "alpha1 = rank((income - dividend)/working_capital);",
+         "alpha11 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "rota = ebit/assets;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "roic = (income - dividend)/invested_capital;",
+         "roic_alpha = log(roic/ts_delay(roic,126)) + 0.2*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.1*log(ts_delay(roic,252)/ts_delay(roic,378));",
+         "alpha2 = group_neutralize(roic_alpha,5*rank(meancap) + 0.5);",
+         "alpha111 = alpha11 == alpha11 ? alpha11 : 0;",
+         "alpha22 = alpha2 == alpha2 ? alpha2 : 0;",
+         "mix = scale(alpha111)+1.4*scale(alpha22);",
+         "group_neutralize((rank(mix)-0.5)^3, 10*rank(meancap)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":126,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = 0.011*(rank((vwap - close)) / rank((vwap + close))) + 2*rank(volume)/rank(adv20);",
+         "alpha = x < 1.3 && x > 0.7 ? group_mean(subj,market,1) : subj;",
+         "alpha1 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))*(1+rank(ts_skewness(returns, 252)));",
+         "gross_margin = (revenue-cogs)/revenue;",
+         "subj = rank(log(gross_margin/ts_delay(gross_margin,250)));",
+         "alpha2 = subj;",
+         "alpha3 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
+         "scale(alpha1) + scale(alpha2) + scale(alpha3)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":63,
+      "text":[
+         "gross = revenue - cogs;",
+         "alpha1 = gross/assets;",
+         "gr = group_rank(market, alpha1);",
+         "alpha11 = group_neutralize(log(alpha1/ts_delay(alpha1, 200)), rank(ppent));",
+         "subj1 = revenue != ts_delay(revenue, 15) ? alpha11 : 0.9 * ts_delay(alpha11, 1);",
+         "weight = (rank(est_rd_expense/bookvalue_ps));",
+         "rota = ebit/assets;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "alpha2 = group_neutralize(weight, 5*rank(meancap)+0.5);",
+         "alpha22 = (bookvalue_ps == ts_delay(bookvalue_ps, 10) ? 0.9 * ts_delay(alpha2, 1) : alpha2);",
+         "subj2 = alpha22 ? alpha22 : 0;",
+         "subj1 = subj1 == subj1 ? subj1 :group_mean(subj1,market,1);",
+         "subj2 = subj2 == subj2 ? subj2 : group_mean(subj2,market,1);",
+         "scale(subj1)+1.1*scale(subj2)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "alpha1 = ts_rank(gross_margin,252)*rank(revenue/assets);",
+         "alpha2 = -(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "alpha11 = alpha1 == alpha1 ? alpha1 : group_mean(alpha1, market,1);",
+         "alpha22 = alpha2 == alph2 ? alpha2 : group_mean(alpha2, market,1);",
+         "alpha = scale(alpha11) + scale(alpha22);",
+         "rank(1/cap) <= 0.8 ? alpha : nan"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":42,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "alpha1 = rank(log(gross_margin/ts_delay(gross_margin,250)));",
+         "alpha11 = alpha1*rank(ts_corr(returns,ts_delay(alpha1,1),5));",
+         "x =(income-dividend)/working_capital;",
+         "alpha2 = log(x/ts_delay(x, 126)) + 0.5*log(ts_delay(x,126)/ts_delay(x, 252));",
+         "alpha111 = alpha11 == alpha11 ? alpha11 : group_mean(alpha11,industry,1);",
+         "alpha22 = alpha2 == alpha2 ? alpha2 : group_mean(alpha2,industry,1);",
+         "scale(alpha111)+scale(alpha22)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha1 = log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252));",
+         "alpha2 = -(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
+         "alpha11 = alpha1==alpha1 ? alpha1 : group_mean(alpha1, market,1);",
+         "alpha22 = alpha2==alpha2 ? alpha2 : group_mean(alpha2, market,1);",
+         "scale(alpha11) + scale(alpha22)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "weight = (rank(est_rd_expense/bookvalue_ps));",
+         "ebt = ebit==ebit ? ebit : group_mean(ebit,market,1);",
+         "ass = assets==assets ? assets : group_mean(assets,market,1);",
+         "rota = ebt/ass;",
+         "alpha = group_neutralize(weight, 5*rank(rota)+0.5);",
+         "alpha1 = (bookvalue_ps == ts_delay(bookvalue_ps, 10) ? 0.9 * ts_delay(alpha, 1) : alpha);",
+         "alpha1 == alpha1 ? alpha1 : 0"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"None",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "meanrota = ts_sum(ebit/assets,21)/21;",
+         "neutr = 2*rank(current_ratio)+0.5;",
+         "inc = income==income ? income : group_mean(income,neutr,1);",
+         "div = dividend==dividend ? dividend : group_mean(dividend, neutr,1);",
+         "invc = invested_capital==invested_capital ? invested_capital : group_mean(invested_capital,neutr,1);",
+         "roic = (inc - div)/invc;",
+         "alpha = log(roic/ts_delay(roic,126))+0.2*log(ts_delay(roic,126)/ts_delay(roic,252))+ log(sales/ts_delay(sales,126)) + 0.2*log(ts_delay(sales,126)/ts_delay(sales,252)) + 0.125*log(ts_delay(sales,252)/ts_delay(sales,378));",
+         "alpha1 = rank(1/cap) >= 0.6 ? 1.1*alpha : 0.9*alpha;",
+         "group_neutralize((rank(alpha1)-0.5)^3, neutr)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "inc = income==income ? income : group_mean(income,5*rank(meancap)+0.5,1);",
+         "div = dividend==dividend ? dividend : group_mean(dividend, 5*rank(meancap)+0.5,1);",
+         "invc = invested_capital==invested_capital ? invested_capital : group_mean(invested_capital,5*rank(meancap)+0.5,1);",
+         "roic = (inc - div)/invc;",
+         "alpha = log(roic/ts_delay(roic,252)) + 0.1*log(ts_delay(roic,126)/ts_delay(roic,252)) + log(sales/ts_delay(sales,126)) + 0.1*log(ts_delay(sales,126)/ts_delay(sales,252));",
+         "group_neutralize((rank(alpha)-0.5)^3, 5*rank(meancap)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "rota = ebit/assets;",
+         "csh = cash==cash ? cash : 0;",
+         "incp = invested_capital==invested_capital ? invested_capital : 0;",
+         "lblts = liabilities_curr==liabilities_curr ? liabilities_curr : group_mean(liabilities_curr,5*rank(rota)+0.5,1);",
+         "rer = retained_earnings==retained_earnings ? retained_earnings : 0;",
+         "x = (csh + incp+rer)/lblts;",
+         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "group_neutralize(alpha,5*rank(rota)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "inc = income == income ? income : group_mean(income, market,1);",
+         "div = dividend == dividend ? dividend : group_mean(dividend, market,1);",
+         "invc = invested_capital == invested_capital ? invested_capital : group_mean(invested_capital, market,1);",
+         "roic = (inc - div)/invc;",
+         "alpha = log(roic/ts_delay(roic,126)) + 0.5*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.25*log(ts_delay(roic,252)/ts_delay(roic,378)) + 0.125*log(ts_delay(roic,378)/ts_delay(roic,504));",
+         "(rank(alpha)-0.5)^3"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":2,
+      "text":[
+         "alpha = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "subj = rank(1/cap) <= 0.8 && rank(1/cap) >= 0.4 ? nan : alpha;",
+         "subj*rank(ts_corr(returns, ts_delay(subj,1),5))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":315,
+      "text":[
+         "alpha=-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "rank(sector) <= 0.15 || rank(sector) >= 0.25 ? alpha*rank(ts_corr(returns,ts_delay(alpha,1),5)) : nan"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "rev = revenue == revenue ? revenue : group_mean(revenue, market, 1);",
+         "cgs = cogs == cogs ? cogs : group_mean(cogs, market, 1);",
+         "cr = current_ratio == current_ratio ? current_ratio : group_mean(current_ratio, market, 1);",
+         "gross_margin = (rev-cgs)/rev;",
+         "(rank(1/cap) >= 0.2 && rank(1/cap) <= 0.4) || (rank(1/cap) <= 0.8 && rank(1/cap) >=0.6) ?",
+         "rank(ts_delta(cr,80)/ts_delay(cr,80)) +",
+         "0.5*rank(log(gross_margin/ts_delay(gross_margin,250))) : nan"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "subj = income/equity;",
+         "alpha = log(subj/ts_delay(subj, 126)) + 0.2*log(ts_delay(subj,126)/ts_delay(subj, 252));",
+         "rota = ebit/assets;",
+         "req = return_equity;",
+         "meanreq = ts_sum(req,63)/63;",
+         "alpha1 = rank(1/cap) <= 0.8 && rank(1/cap) >= 0.6 ? (rank(alpha)-0.5)^3 : 0;",
+         "ts_decay_exp_window(alpha1*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)),0.6,63)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "subj = income/equity;",
+         "alpha = log(subj/ts_delay(subj, 126)) + 0.2*log(ts_delay(subj,126)/ts_delay(subj, 252));",
+         "rota = ebit/assets;",
+         "alpha1 = rank(1/cap) <= 0.6 && rank(1/cap) >= 0.4 ? (rank(alpha) - 0.5)^3 : 0;",
+         "group_neutralize(alpha1, 5*rank(rota)+0.5)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "subj = income/equity;",
+         "alpha = log(subj/ts_delay(subj, 126)) + 0.2*log(ts_delay(subj,126)/ts_delay(subj, 252));",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "alpha1 = rank(1/cap) <= 0.8 && rank(1/cap) >= 0.6 ? nan : (rank(alpha) - 0.5)^3;",
+         "group_neutralize(alpha1, 5*rank(rota)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "subj = mdf_ibt_q/mdf_cse_q;",
+         "alpha = log(subj/ts_delay(subj, 126)) + 0.2*log(ts_delay(subj,126)/ts_delay(subj, 252));",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "roic = (income - dividend)/invested_capital;",
+         "subj = log(roic/ts_delay(roic,126)) + 0.2*log(ts_delay(roic,126)/ts_delay(roic,252));",
+         "alpha = subj*(rank(ts_skewness(returns, 252)));",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "group_neutralize((rank(alpha) - 0.5)^3,5*rank(rota)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "roic = (income - dividend)/invested_capital;",
+         "subj = log(roic/ts_delay(roic,126)) + 0.2*log(ts_delay(roic,126)/ts_delay(roic,252));",
+         "alpha = subj*(rank(ts_skewness(returns, 252)));",
+         "rota = mdf_ebt_q/mdf_ita_q;",
+         "meanreq = ts_sum(mdf_rec,63)/63;",
+         "group_neutralize((rank(alpha) - 0.5)^3,5*rank(rota)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.001,
+      "decay":196,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "gross_income = mdf_rev_q - cogs;",
+         "subj1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
+         "subj2 = rank(1/cap) <= 0.2 ? 1.2*subj1 : 0.9*subj1;",
+         "alpha = x < 1.3 && x > 0.7 ? nan : subj2;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "group_neutralize(alpha*rank(ts_corr(returns, ts_delay(alpha,1),5)), 5*rank(meancap)+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.1,
+      "decay":126,
+      "text":[
+         "x = (sales-cogs)/sales;",
+         "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
+         "subj = rank(1/cap)<0.8 ? 1.05*alpha : 0.95*alpha;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "meanrota = ts_sum(mdf_rac,21)/21;",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "group_neutralize(subj*rank(ts_corr(returns,ts_delay(subj,1),5))*(1+rank(ts_skewness(returns, 252))), 5*rank(meanrota)+0.5) "
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":126,
+      "text":[
+         "x = (sales-cogs)/sales;",
+         "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
+         "subj = rank(1/cap)<0.8 ? 1.05*alpha : 0.95*alpha;",
+         "meancap = ts_sum(mdf_cap,21)/21;",
+         "meanrota = ts_sum(mdf_rac,21)/21;",
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "group_neutralize(subj*rank(ts_corr(returns,ts_delay(subj,1),5))*(1+rank(ts_skewness(returns, 252))), 5*rank(meanrota)+0.5) "
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x = (sales-cogs)/sales;",
+         "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
+         "subj = rank(1/cap)<0.8 ? alpha : nan;",
+         "mean = ts_sum(cap,21)/21;",
+         "group_neutralize(ts_decay_exp_window(subj,0.9,63), 5*rank(mean)+0.5) "
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":63,
+      "text":[
+         "x = (sales-cogs)/sales;",
+         "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
+         "subj = rank(1/cap)<0.8 ? alpha : nan;",
+         "mean = ts_sum(cap,21)/21;",
+         "group_neutralize(subj, 5*rank(mean)+0.5) "
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":3,
+      "text":[
+         "alpha = rank((ts_rank((volume / adv20), 20) * ts_rank((-ts_delta(close, 7)), 8))+0.3*rank(volume)/rank(adv20));",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":6,
+      "text":[
+         "ts_rank(volume*rank((high+low)/2 - close), 10)"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.75,5)"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
+         "ts_decay_exp_window(alpha,0.6,5)"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1500",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "alpha = rank((ts_rank((volume / adv20), 21) * ts_rank((-ts_delta(close, 7)), 8))+0.3*rank(volume)/rank(adv20));",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"ASI",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":3,
+      "text":[
+         "alpha = rank((ts_rank((volume / adv20), 20) * ts_rank((-ts_delta(close, 7)), 8))+0.3*rank(volume)/rank(adv20));",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":252,
+      "text":[
+         "alpha = scale(log(return_equity/ts_delay(return_equity,252)));",
+         "alpha*(1+rank(ts_skewness(returns, 252)))*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"None",
+      "max_stock_weight":0.1,
+      "decay":63,
+      "text":[
+         "rota = ebit/assets;",
+         "ratio_alpha = income/equity;",
+         "alpha = group_neutralize(rank(ratio_alpha/ts_delay(ratio_alpha,252)-1),2*rank(rota) + 0.5);",
+         "x = rank(1/cap) > 0.45 ? alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))*(1+rank(ts_skewness(returns, 252)))*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)) : nan;",
+         "group_neutralize(x, 3*rank(rota)+0.5)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "alpha"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1500",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+      ],
+      "region":"ASI",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":21,
+      "text":[
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "month_return = close/ts_delay(close,20) - 1;",
+         "delay_month_return = ts_delay(month_return, 235);",
+         "alpha = rank(sector) > 0.1 ? rank(delay_month_return) + 2*rank(volume/adv20) : nan;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":126,
+      "text":[
+         "alpha = log(inventory_turnover/ts_delay(inventory_turnover,126))+0.5*log(ts_delay(inventory_turnover, 126)/ts_delay(inventory_turnover,252))+0.25*log(ts_delay(inventory_turnover, 252)/ts_delay(inventory_turnover,378));",
+         "alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1500",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":3,
+      "text":[
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close));",
+         "alpha = subj*rank(ts_corr(returns, ts_delay(subj,1),5));",
+         "rank(alpha)"
+      ],
+      "region":"ASI",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":3,
+      "text":[
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close));",
+         "alpha = subj*rank(ts_corr(returns, ts_delay(subj,1),5));",
+         "rank(alpha)*(1+rank(ts_skewness(returns, 252)))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "alpha = ts_rank(cashflow_op/debt, 250) + ts_rank(income/debt_lt, 250);",
+         "rank(1/cap) < 0.8 ? rank(alpha) : nan"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":126,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "alpha = rank(log(gross_margin/ts_delay(gross_margin,126))+0.5*log(ts_delay(gross_margin,126)/ts_delay(gross_margin,252)));",
+         "rank(1/cap) > 0.4 ? alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)) : nan"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP800",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.5, 5);",
+         "alpha = subj;",
+         "group_neutralize(alpha*rank(ts_corr(returns,ts_delay(alpha,1),5)), sector)"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "gross_margin = income/revenue;",
+         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP800",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.45, 5);",
+         "alpha = subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":2,
+      "text":[
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.45, 5);",
+         "alpha = subj;",
+         "alpha"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":2,
+      "text":[
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "alpha = subj;",
+         "alpha"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "subj = ts_rank(volume, 22);",
+         "alpha = subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":126,
+      "text":[
+         "x = (revenue-cogs-operating_expense-interest_expense)/revenue;",
+         "alpha = log(pretax_income/ts_delay(pretax_income,126))+0.5*log(ts_delay(pretax_income,126)/ts_delay(pretax_income,252))+0.25*log(ts_delay(pretax_income,252)/ts_delay(pretax_income,378));",
+         "group_neutralize(alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)),sector)"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":126,
+      "text":[
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "gross_margin = income/revenue;",
+         "alpha = log(gross_margin/ts_delay(gross_margin,126)) + 0.5*log(ts_delay(gross_margin,126)/ts_delay(gross_margin,252)) + 0.25*log(ts_delay(gross_margin,252)/ts_delay(gross_margin,378));",
+         "modified = group_neutralize(alpha, 4*rank(liquid) + 0.5) * group_weight;",
+         "modified*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1200",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":126,
+      "text":[
+         "alpha = log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252))+0.25*log(ts_delay(capex,252)/ts_delay(capex,378));",
+         "alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP600",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "subj = rank(15*rank(vwap)/rank(close) + (high+low)/2-close + 2*rank(volume)/rank(adv20));",
+         "alpha = subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"EUR",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP800",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "alpha = log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)) + 0.25*log(ts_delay(debt,252)/ts_delay(debt,378))+ 0.125*log(ts_delay(debt,378)/ts_delay(debt,504));",
+         "-alpha"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP800",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "alpha = log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252)) + 0.25*log(ts_delay(operating_income,252)/ts_delay(operating_income,378));",
+         "alpha*rank(scale(ts_delta(close,63))/ts_delta(alpha,63))"
+      ],
+      "region":"EUR",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.01,
+      "decay":2,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj1 = ts_rank(volume, 22);",
+         "alpha1 = x < 1.3 && x > 0.7 ? 0 : subj1;",
+         "subj2 = volume/adv20;",
+         "alpha2 = x < 1.3 && x > 0.7 ? 0 : subj2;",
+         "rank(alpha2*rank(ts_corr(returns,ts_delay(alpha2,1),5)) + alpha1*rank(ts_corr(returns,ts_delay(alpha1,1),5)))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = rank(log(inventory_turnover/ts_delay(inventory_turnover, 250)));",
+         "alpha1 = group_neutralize(alpha, rank(sales));",
+         "gr = group_rank(rank(sales), alpha);",
+         "alpha11 = (gr >= 0.7 || gr <= 0.2 ? alpha1 : group_mean(alpha1, rank(sales), 1));",
+         "alpha11 == alpha11 ? alpha11: 0"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":252,
+      "text":[
+         "gross = revenue - cogs;",
+         "alpha = gross/assets;",
+         "gr = group_rank(market, alpha);",
+         "alpha1 = group_neutralize(log(alpha/ts_delay(alpha, 200)), rank(ppent));",
+         "revenue != ts_delay(revenue, 15) ? alpha1 : 0.9 * ts_delay(alpha1, 1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":10,
+      "text":[
+         "alpha = (income - dividend)/ts_decay_linear_window(cap, 63);",
+         "alpha1 = log(alpha/ts_delay(alpha, 250));",
+         "income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.01,
+      "decay":3,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = rank(volume)/rank(adv20);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "h = ts_max((high+low)/2,100);",
+         "l = ts_min((high+low)/2,100);",
+         "subj = close < l ? rank(close*volume) : close > h ? -rank(close*volume) : rank(volume)/rank(adv20);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":50,
+      "text":[
+         "alpha = rank((income - dividend)/working_capital);",
+         "income != ts_delay(income, 10) ? alpha : 0.9 * ts_delay(alpha, 1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "weight = (rank(est_rd_expense/bookvalue_ps));",
+         "rota = ebit/assets;",
+         "alpha = group_neutralize(weight, 5*rank(rota)+0.5);",
+         "alpha1 = (bookvalue_ps == ts_delay(bookvalue_ps, 10) ? 0.9 * ts_delay(alpha, 1) : alpha);",
+         "alpha1 == alpha1 ? alpha1 : 0"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = ts_rank(volume, 22);",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":8,
+      "text":[
+         "log(volume/ts_delay(volume,5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":8,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = (high+low)/2 - close;",
+         "alpha = x < 1.25 && x > 0.75 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
+         "subj = volume/adv20;",
+         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x= income/equity;",
+         "log(x/ts_delay(x, 378))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x =(income-dividend)/working_capital;",
+         "log(x/ts_delay(x, 126)) + 0.5*log(ts_delay(x,126)/ts_delay(x, 252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":50,
+      "text":[
+         "x = (sales-cogs)/sales;",
+         "log(x/ts_delay(x, 126))+log(ts_delay(x,126)/ts_delay(x, 252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "alpha = ts_sum(rank (ts_sum((high+low)/2-close, 2)+rank(volume)/rank(adv20)), 9);",
+         "x = snt_ratio==snt_ratio ? snt_ratio : 2;",
+         "x < 1.5 && x > 0.5 ? 0 : alpha"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "lala = income/sales;",
+         "log(lala/ts_delay(lala, 252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "rank((((high * ts_delay(low, 1))^0.5006) - vwap))*ts_decay_exp_window(rank(ts_delay(volume, 0))/rank(adv20), 0.73, 16)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":45,
+      "text":[
+         "x = snt_ratio==snt_ratio ? snt_ratio : 2;",
+         "x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 0.95, 8)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "snt_ratio < 1.5 && snt_ratio > 0.5 ? 0 : rank(vwap/close)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "-ts_rank(debt,126)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "log(operating_income/ts_delay(operating_income,126))+0.5*log(ts_delay(operating_income,126)/ts_delay(operating_income,252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "x = (revenue-cogs-operating_expense-interest_expense)/revenue;",
+         "log(pretax_income/ts_delay(pretax_income,126))+0.5*log(ts_delay(pretax_income,126)/ts_delay(pretax_income,252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":40,
+      "text":[
+         "-group_neutralize(rank((est_sales-sales)/sales), 4*rank(current_ratio)+0.5)*(1-rank(sales - ts_delay(est_sales,63)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":30,
+      "text":[
+         "-group_neutralize(rank((est_sales-sales)/sales), 4*rank(ebit/assets)+0.5)*(1-rank(sales - ts_delay(est_sales,63)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "ts_decay_exp_window(group_neutralize(rank(sales_growth)+rank((revenue-cogs)/assets), 5*rank(current_ratio)+0.5),0.2,50)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "ts_sum(rank (ts_sum((high+low)/2-close, 2)+rank(volume)/rank(adv20)), 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":6,
+      "text":[
+         "rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close))*(1+2*rank (correlation (est_sales, sales, 5)))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":4,
+      "text":[
+         "ts_decay_exp_window(rank(((high * low)^0.5) - vwap), 0.8, 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":2,
+      "text":[
+         "rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":4,
+      "text":[
+         "rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":6,
+      "text":[
+         "rank(15*rank(vwap)/rank(close) + (high+low)/2-close + 2*rank(volume)/rank(adv20))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "x = revenue/assets;",
+         "ts_rank(x,252)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = group_neutralize((rank(scale(income)/(1 + 0.12* (invested_capital/working_capital))) - 0.5)^3 + scale(revenue/assets), market);",
+         "alpha == alpha ? alpha : group_mean(alpha, market, 1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "alpha = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
+         "group_neutralize(alpha, 4*rank(rota) + 0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "alpha = -ts_sum(snt_bearish, 21);",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "rota=ebit/assets;",
+         "liquid = rank(ts_sum(vwap*volume,62));",
+         "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
+         "gross_margin = income/revenue;",
+         "alpha = log(gross_margin/ts_delay(gross_margin,126)) + 0.5*log(ts_delay(gross_margin,126)/ts_delay(gross_margin,252)) + 0.25*log(ts_delay(gross_margin,252)/ts_delay(gross_margin,378)) + 0.125*log(ts_delay(gross_margin,378)/ts_delay(gross_margin,504));",
+         "group_neutralize(alpha, 4*rank(liquid) + 0.5) * group_weight"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":3,
+      "text":[
+         "group_neutralize(volume/adv20, sales/assets)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":510,
+      "text":[
+         "alpha=income/(ts_sum(cap,65)+liabilities-liabilities_curr);",
+         "rota=ebit/assets;",
+         "alpha+income/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "x = (cash + invested_capital)/liabilities;",
+         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "group_neutralize(alpha,ebit/assets + 0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "x = (cash + invested_capital+retained_earnings)/liabilities_curr ;",
+         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "rota = ebit/assets;",
+         "group_neutralize(alpha,rota+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":17,
+      "text":[
+         "rota = ebit/assets;",
+         "group_neutralize(-ts_count_nans(cashflow_dividends,510) + scale(revenue/assets),rota+0.5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"None",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "rota = ebit/assets;",
+         "ratio = income/equity;",
+         "ratio_alpha = log(ratio/ts_delay(ratio,126)) + 0.5*log(ts_delay(ratio,126)/ts_delay(ratio,252)) + 0.25*log(ts_delay(ratio,252)/ts_delay(ratio,378)) + 0.125*log(ts_delay(ratio,378)/ts_delay(ratio,502));",
+         "alpha = group_neutralize(ratio_alpha,rota + 0.5);",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":100,
+      "text":[
+         "rota = ebit/assets;",
+         "ratio_alpha = income/equity;",
+         "alpha = group_neutralize(rank(ratio_alpha/ts_delay(ratio_alpha,252)-1),rota + 0.5);",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"None",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "rota = ebit/assets;",
+         "roic = (income - dividend)/invested_capital;",
+         "roic_alpha = log(roic/ts_delay(roic,126)) + 0.3*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.09*log(ts_delay(roic,252)/ts_delay(roic,378))+0.027*log(ts_delay(roic,378)/ts_delay(roic,504));",
+         "alpha = group_neutralize(roic_alpha,rota + 0.5);",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital;",
+         "log(roic/ts_delay(roic,126)) + 0.5*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.25*log(ts_delay(roic,252)/ts_delay(roic,378)) + 0.125*log(ts_delay(roic,378)/ts_delay(roic,504))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital;",
+         "log(roic/ts_delay(roic,126)) + 0.5*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.25*log(ts_delay(roic,252)/ts_delay(roic,378)) + 0.125*log(ts_delay(roic,378)/ts_delay(roic,504))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital;",
+         "log(roic/ts_delay(roic,252)) + 0.5*log(ts_delay(roic,252)/ts_delay(roic,454))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital;",
+         "log(roic/ts_delay(roic,252)) + log(sales/ts_delay(sales,252))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital; ",
+         "alpha = log(roic/ts_delay(roic,252));",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "roic = (income - dividend)/invested_capital;",
+         "log(roic/ts_delay(roic,252))* (1/ts_stddev(close,63))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.019,
+      "decay":100,
+      "text":[
+         "alpha = -scale(rank(equity^2)/rank(equity + debt));",
+         "alpha*group_mean(rank(ts_corr(alpha,returns,50)),subindustry,1)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(est_grossincome/income, subindustry)*(1-rank(abs(income-ts_delay(est_grossincome,63)))) - ts_count_nans(cashflow_dividends,400)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":315,
+      "text":[
+         "-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":63,
+      "text":[
+         "-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) + 0.5*revenue/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63))))+revenue/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))-ts_count_nans(cashflow_dividends,400)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))+revenue/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":378,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))))+revenue/assets"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":378,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "-group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.03,
+      "decay":200,
+      "text":[
+         "gross_income = revenue - cogs;",
+         "-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":63,
+      "text":[
+         "scale(log(return_assets/ts_delay(return_assets,126)) + log(return_equity/ts_delay(return_equity,126)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "scale(log(return_equity/ts_delay(return_equity,252)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":10,
+      "text":[
+         "gross_margin = income/revenue;",
+         "-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":500,
+      "text":[
+         "rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":150,
+      "text":[
+         "rank(log(inventory_turnover/ts_delay(inventory_turnover,125)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":0,
+      "text":[
+         "rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.03,
+      "decay":100,
+      "text":[
+         "-group_neutralize(est_eps-eps,market)*(1-rank(abs(eps-ts_delay(est_eps,63))))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":200,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "ts_rank(gross_margin,252)*rank(revenue/assets)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "ts_rank(1/debt_lt,5)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.019,
+      "decay":300,
+      "text":[
+         "-rank(equity^2)/rank(equity + debt)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":500,
+      "text":[
+         "scale(scale(ts_rank(cashflow_op/debt, 250)) + scale(ts_rank(income/debt_lt, 250)) + scale(rank(revenue/assets)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP500",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":7,
+      "text":[
+         "-sign(close-vwap)*(close/vwap)*(1+sign(ts_skewness(returns,50))) + (high+low)/2 -close"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":7,
+      "text":[
+         "-close/vwap"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":6,
+      "text":[
+         "ts_rank(volume*rank((high+low)/2 - close), 10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.75,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":5,
+      "text":[
+         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5) + 4*rank(vwap)/rank(close)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.7, 10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_decay_exp_window(rank(vwap) / rank(close),0.3,10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":500,
+      "text":[
+         "direction = ts_delta(close,9);",
+         "volatility = ts_delay(abs(ts_delta(close,1)),0)+ts_delay(abs(ts_delta(close,1)),1)+ts_delay(abs(ts_delta(close,1)),2)+ts_delay(abs(ts_delta(close,1)),3)+ts_delay(abs(ts_delta(close,1)),4)+ts_delay(abs(ts_delta(close,1)),5)+ts_delay(abs(ts_delta(close,1)),6)+ts_delay(abs(ts_delta(close,1)),7)+ts_delay(abs(ts_delta(close,1)),8)+ts_delay(abs(ts_delta(close,1)),9);",
+         "effy = abs(direction)/volatility;",
+         "fastest = 2/3;",
+         "slowest = 2/31;",
+         "smooth = effy*(fastest-slowest)+slowest;",
+         "c = smooth^2;",
+         "ama0 = ts_delay(c*close,10);",
+         "ama1 = ts_delay(c*close,9) + ts_delay(1-c,9)*ama0;",
+         "ama2 = ts_delay(c*close,8) + ts_delay(1-c,8)*ama1;",
+         "ama3 = ts_delay(c*close,7) + ts_delay(1-c,7)*ama2;",
+         "ama4 = ts_delay(c*close,6) + ts_delay(1-c,6)*ama3;",
+         "ama5 = ts_delay(c*close,5) + ts_delay(1-c,5)*ama4;",
+         "ama6 = ts_delay(c*close,4) + ts_delay(1-c,4)*ama5;",
+         "ama7 = ts_delay(c*close,3) + ts_delay(1-c,3)*ama6;",
+         "ama8 = ts_delay(c*close,2) + ts_delay(1-c,2)*ama7;",
+         "ama9 = ts_delay(c*close,1) + ts_delay(1-c,1)*ama8;",
+         "ama = c*close + (1-c)*ama9;",
+         "scale(scale(trade_when(close - ama > 0, close-ama, sign(close -ama) != ts_delay(sign(close-ama), 1))) + scale(rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":7,
+      "text":[
+         "ts_rank(volume/sharesout,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":500,
+      "text":[
+         "yearmax = argmax(cap, 250);",
+         "alpha = yearmax - ts_delay(yearmax,250);",
+         "-alpha/ts_stddev(cap,150)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP200",
+      "neutralization":"Market",
+      "max_stock_weight":0.03,
+      "decay":10,
+      "text":[
+         "roc_big = (close - ts_delay(close, 190))/ts_delay(close, 190);",
+         "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
+         "quartal_return = close/ts_delay(close, 65) - 1;",
+         "delay_ret = ts_delay(quartal_return, 190);",
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "ts_sum(rank(low)/rank(close)*rank(open)/rank(close), 3)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "-ts_count_nans(inventory, 400)+0.21*countnans (cashflow_dividends, 430)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":7,
+      "text":[
+         "(rank((sign(ts_delta(volume, 1)) * (-1 * ts_delta(close, 1))/power(volume, 1.3))+rank (ts_sum((high+low)/2-close, 5)))*power (rank(volume)/rank(adv20), 1.21))/(1+0.15*rank (max (high-low, max (abs (ts_delay(close, 1)-high), abs (ts_delay(close, 1)-low)))))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP2000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "(1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_rank (ts_sum(rank (ts_sum((high+low)/2-close, 7)+rank(volume)/rank(adv20)), 5), 4)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "rank(-1 * ts_corr(rank(high),rank(volume), 3)+0.3*rank(stddev (snt_social_volume, 10))+0.3*rank(ts_covariance(volume, close, 4)))*rank(rank(volume)/rank(adv20))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP1000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":1,
+      "text":[
+         "ts_delta(rank(sales/assets), 252)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":10,
+      "text":[
+         "month_return = close/ts_delay(close,20) - 1;",
+         "delay_month_return = ts_delay(month_return, 235);",
+         "rank(delay_month_return) + 2*rank(volume/adv20)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "rank(ts_delta(current_ratio,80)/ts_delay(current_ratio,80)) +",
+         "0.5*rank(log(gross_margin/ts_delay(gross_margin,250)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "-ts_count_nans(cashflow_dividends, 400)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":300,
+      "text":[
+         "month_return = close/ts_delay(close,20) - 1;",
+         "avg_12_months = (ts_delay(month_return,0)+ts_delay(month_return,20)+ts_delay(month_return,40)+ts_delay(month_return,60)+ts_delay(month_return,80)+ts_delay(month_return,100)+ts_delay(month_return,120)+ts_delay(month_return,140)+ts_delay(month_return,160)+ts_delay(month_return,180)+ts_delay(month_return,200)+ts_delay(month_return,220))/12;",
+         "market_portfolio = group_mean(month_return, market, 1);",
+         "beta = ts_regression(market_portfolio, month_return, 250, 0, 2);",
+         "alpha = abs(beta) > 0.5 ? rank(avg_12_months*beta) : 0;",
+         "alpha"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "0.011*(rank((vwap - close)) / rank((vwap + close))) + 2*rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":500,
+      "text":[
+         "rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "(ts_rank((volume / adv20), 20) * ts_rank((-ts_delta(close, 7)), 8))+0.3*rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "rank(((1 - rank((ts_stddev(returns, 2) / ts_stddev(returns, 5)))) + (1 - rank(ts_delta(close, 1)))))+0.55*rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "0.5*rank(((1 - rank((ts_stddev(returns, 2) / ts_stddev(returns, 5)))) + (1 - rank(ts_delta(close, 1))))) + rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":6,
+      "text":[
+         "-rank(close)/rank(vwap) - 0.01*rank(((((-1 * returns) * adv20) * vwap) * (high - close)))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":2,
+      "text":[
+         "-rank(close)/rank(vwap) - 0.1*rank(((ts_sum(open, 5) * ts_sum(returns, 5)) - ts_delay((ts_sum(open, 5) * ts_sum(returns, 5)),10)))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":4,
+      "text":[
+         "ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":150,
+      "text":[
+         "ass_ratio = revenue/assets;",
+         "rank(ts_delta(ass_ratio,125))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "rank(revenue/assets)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":150,
+      "text":[
+         "rank(log(inventory_turnover/ts_delay(inventory_turnover,125)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "gross_margin = (revenue-cogs)/revenue;",
+         "rank(log(gross_margin/ts_delay(gross_margin,250)))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "h = ts_max((high+low)/2,100);",
+         "l = ts_min((high+low)/2,100);",
+         "close < l ? rank(close*volume) : close > h ? -rank(close*volume) : rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":5,
+      "text":[
+         "rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.02,
+      "decay":0,
+      "text":[
+         "(-(close-ts_delay(close,5))/ts_delay(close,5)+volume/adv20)/ts_stddev(close,20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "-rank((close-ts_delay(close,5))/ts_delay(close,5))+rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_rank(est_netprofit/est_sales,250) + ts_rank(1/debt_lt,250)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "rank(volume)/rank(adv20)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.019,
+      "decay":0,
+      "text":[
+         "-rank(equity^2)/rank(equity + debt)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "ts_rank(cashflow_op/debt, 250) + ts_rank(income/debt_lt, 250)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":8,
+      "text":[
+         "log(income/ts_delay(income,250))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "rank(income/debt_lt) + ts_rank(operating_income/assets, 250) + ts_rank(cashflow_op/assets,250)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Market",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "ts_rank((cashflow_op+income)/assets,250)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Industry",
+      "max_stock_weight":0.0,
+      "decay":0,
+      "text":[
+         "ts_rank(operating_income/assets, 250) + ts_rank(cashflow_op/assets,250)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_decay_exp_window(ts_rank(volume, 22),0.55,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":7,
+      "text":[
+         "-sign(close-vwap)*(close/vwap)*(1+sign(ts_skewness(returns,50))) + (high+low)/2 -close"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":6,
+      "text":[
+         "-close/vwap"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":10,
+      "text":[
+         "ts_rank(volume*((high+low)/2 - close),10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "close/vwap < 0.9 || close/vwap > 1.1 ? -close/vwap : volume/adv20"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":6,
+      "text":[
+         "ts_rank(volume*rank((high+low)/2 - close), 10)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":0,
+      "text":[
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.8,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":3,
+      "text":[
+         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.5, 5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":2,
+      "text":[
+         "ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":1,
+      "text":[
+         "ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10)"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":1,
+      "text":[
+         "ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 0.5,5)"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))"
+      ],
+      "region":"USA",
+      "delay":1
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":4,
+      "text":[
+         "ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))"
+      ],
+      "region":"USA",
+      "delay":0
+   },
+   {
+      "pasteurize":"On",
+      "nanhandling":"Off",
+      "universe":"TOP3000",
+      "neutralization":"Subindustry",
+      "max_stock_weight":0.1,
+      "decay":10,
+      "text":[
+         "rank(vwap) / rank(close)"
+      ],
+      "region":"USA",
+      "delay":1
+   }
+]
