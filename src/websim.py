@@ -216,7 +216,8 @@ OPERATOR_WORDS = {
     "ts_sum",
     "ts_theilsen",
     "ts_triple_corr",
-    "ts_zscore"
+    "ts_zscore",
+    "ts_regression"
     "convert",
     "instpnl"
     "||"
