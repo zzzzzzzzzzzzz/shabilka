@@ -20,9 +20,6 @@ from hashlib import md5
 import config
 from string import Formatter
 
-
-
-
 DELAYS_DISTRIBUTION = {
     "PRICE_VOLUME_DATA": {0,1},
     "FUNDAMENTAL_DATA": {1},
@@ -225,9 +222,12 @@ OPERATOR_WORDS = {
     "||"
     "|",
     "&&",
-    "!"
-    "^"
-    "target"
+    "!",
+    "^",
+    "target",
+    "factor",
+    "nan",
+    "NaN"
 }
 
 DATA_WORDS = {
@@ -1259,6 +1259,9 @@ class Alpha(object):
         else:
             self.components = []
 
+        if not self._check_correctness():
+            raise ValueError("This alpha is not valid for such universe, region, delay options")
+
     def print_stats(self):
         """
         Красиво выводит статы альфы
@@ -1275,7 +1278,7 @@ class Alpha(object):
         """
         res = ""
         for elem in self.text:
-            res += elem + '   '
+            res += elem + '  \n'
         return res
 
     @property
@@ -1465,27 +1468,83 @@ class Alpha(object):
                 nanhandling=self.nanhandling
             )
 
-    def obfuscate_text(self, suffix):
+    def pretty_print_text(self):
+        for row in self.text:
+            print(row)
+
+    def _return_variables_and_special_words(self, variables_flag=True, other_words_flag=True, grouping_words_flag=True, operator_words_flag=True, data_words_flag=True):
         variables_list = []
+        special_words_list = []
+        other_words_list = []
+        grouping_words_list = []
+        operator_words_list = []
+        data_words_list = []
         for row in self.text:
             for word in re.findall(r'\b[a-zA-Z]\w+\b', row):
                 word_lower = word.lower()
                 found = False
-                if word_lower in OTHER_WORDS.keys():
-                    found = True
-                if word_lower in GROUPING_WORDS.keys():
-                    found = True
-                if word_lower in OPERATOR_WORDS:
-                    found = True
-                for key, value in DATA_WORDS.items():
-                    if word_lower in value.keys():
+                if other_words_flag:
+                    if word_lower in OTHER_WORDS.keys():
                         found = True
-                        break
+                        other_words_list.append(word)
 
-                if not found:
-                    variables_list.append(word)
+                if grouping_words_flag:
+                    if word_lower in GROUPING_WORDS.keys():
+                        found = True
+                        grouping_words_list.append(word)
 
-        result = self.text
+                if operator_words_flag:
+                    if word_lower in OPERATOR_WORDS:
+                        found = True
+                        operator_words_list.append(word)
+
+                if data_words_flag:
+                    for key, value in DATA_WORDS.items():
+                        if word_lower in value.keys():
+                            found = True
+                            data_words_list.append(word)
+                            break
+
+                if variables_flag:
+                    if not found:
+                        variables_list.append(word)
+
+        special_words_list = other_words_list + grouping_words_list + operator_words_list + data_words_list
+
+        return variables_list, special_words_list
+
+    def _check_correctness(self):
+        variables, specials = self._return_variables_and_special_words(other_words_flag=False, grouping_words_flag=False, operator_words_flag=False)
+        import pymysql
+        with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD, config.DB_NAME) as cursor:
+            for word in specials:
+                query = \
+                """
+                    SELECT 
+                      1 
+                    FROM 
+                      data_words
+                    WHERE
+                      data_name='{data_name}'
+                      AND 
+                      region='{region}'
+                      AND 
+                      delay={delay}
+                """.format(
+                    data_name=word.lower(),
+                    region=self.region.lower(),
+                    delay=self.delay
+                )
+                cursor.execute(query)
+            if not cursor.fetchone():
+                print("found incompaitable with {} {} {} special word '{}'".format(self.universe.lower(), self.region.lower(), self.delay, word))
+                return False
+
+        return True
+
+    def obfuscate_text(self, suffix):
+        variables_list, specials = self._return_variables_and_special_words()
+        result = self.text.copy()
         for var in variables_list:
             regex = re.compile(r'\b{}\b'.format(var))
 
@@ -1627,7 +1686,18 @@ class WebSim(object):
 
             input_form.click()
             set_input_action = ActionChains(self.driver)
-            set_input_action.send_keys(alpha.text_str)
+
+            l = len(alpha.text)
+            for idx in range(l):
+                set_input_action.send_keys(alpha.text[idx])
+
+                if idx != l-1:
+                    set_input_action.send_keys(Keys.SPACE, Keys.ESCAPE, Keys.ENTER)
+                else:
+                    set_input_action.send_keys(Keys.ESCAPE)
+
+            # set_input_action.send_keys(alpha.text_str)
+            set_input_action.move_to_element(settings_button)
             set_input_action.perform()
 
             if debug:

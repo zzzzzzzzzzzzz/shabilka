@@ -66,11 +66,11 @@
          "rota=ebit/assets;",
          "liquid = rank(ts_sum(vwap*volume,62));",
          "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
-         "alpha = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
-         "a2=group_neutralize(alpha, 4*rank(rota) + 0.5);",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha1 = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
+         "a2=group_neutralize(alpha1, 4*rank(rota) + 0.5);",
+         "alpha2 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a3=group_neutralize(alpha, 5 * rank (neutr) + 0.5);",
+         "a3=group_neutralize(alpha2, 5 * rank (neutr) + 0.5);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -89,15 +89,15 @@
          "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
          "gross_margin = income/revenue;",
          "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
-         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "a2=-group_neutralize(rank((est_sales-sales)/sales), industry)*(1-rank(sales - ts_delay(est_sales,63)))*(1-rank(ts_delay(sales,63) - ts_delay(est_sales,126)));",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha2 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a5=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a5=group_neutralize (alpha2, 5 * rank (neutr) + 0.5);",
          "base = scale(a1)+scale(a2)+2*scale(a5);",
          "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
          "base1 = is_nan(base) ? group_mean(pasteurize(base),mygroup,1) : base;",
@@ -141,7 +141,7 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "a1=sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "a1=sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0;",
          "gross_margin = income/revenue;",
          "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
          "a3=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
@@ -190,7 +190,7 @@
          "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
          "gross_margin = income/revenue;",
          "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
-         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -209,8 +209,8 @@
          "gross_margin = income/revenue;",
          "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
          "a1=alpha;",
-         "alpha = group_neutralize(log(pretax_income/assets/ts_delay(pretax_income/assets, 250)), rank(current_ratio) * 3 + 1);",
-         "a2=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
+         "alpha1 = group_neutralize(log(pretax_income/assets/ts_delay(pretax_income/assets, 250)), rank(current_ratio) * 3 + 1);",
+         "a2=sales != ts_delay(sales, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "a3=-(log(capex/ts_delay(capex,126))+0.5*log(ts_delay(capex,126)/ts_delay(capex,252)))-(log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)));",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base = is_nan(base) ? group_mean(base,market,1) : base;",
@@ -362,14 +362,14 @@
       "decay":0,
       "text":[
          "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20);",
-         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "a3 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
          "alpha = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
          "a4=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
          "yearmax = argmax(cap, 250);",
-         "alpha = yearmax - ts_delay(yearmax,250);",
-         "a5=-alpha/ts_stddev(cap,150);",
+         "alpha1 = yearmax - ts_delay(yearmax,250);",
+         "a5=-alpha1/ts_stddev(cap,150);",
          "base = scale(a1)+scale(a2)+scale(a3)+scale(a4)+0.1*scale(a5);",
          "base1 = is_nan(base) ? group_mean(base,industry,1) : base;",
          "a1=(rank(base1)-0.2)^3;",
@@ -411,14 +411,14 @@
       "decay":21,
       "text":[
          "a1=rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250))*rank(volume)/rank(adv20);",
-         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a2=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "a3 = rank(ts_covariance(return_assets, group_mean(industry,return_assets,1),250)/ts_stddev(group_mean(industry,return_assets,1),250));",
          "alpha = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
          "a4=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
          "yearmax = argmax(cap, 250);",
-         "alpha = yearmax - ts_delay(yearmax,250);",
-         "a5=-alpha/ts_stddev(cap,150);",
+         "alpha1 = yearmax - ts_delay(yearmax,250);",
+         "a5=-alpha1/ts_stddev(cap,150);",
          "base = scale(a1)+scale(a2)+scale(a3)+scale(a4)+0.1*scale(a5);",
          "base1 = is_nan(base) ? group_mean(base,industry,1) : base;",
          "(rank(base1)-0.2)^3"
@@ -458,9 +458,9 @@
          "a1=rank(1/cap) < 0.8 ? rank(alpha) : nan;",
          "a2 = rank(((eps-est_eps)/ts_stddev(eps,500))) + 0.2*rank(revenue/assets);",
          "a3 = -rank((close-ts_delay(close,5))/ts_delay(close,5))+rank(volume)/rank(adv20);",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha1 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a4=group_neutralize(alpha, 5 * rank(neutr) + 0.5);",
+         "a4=group_neutralize(alpha1, 5 * rank(neutr) + 0.5);",
          "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -476,7 +476,7 @@
       "max_stock_weight":0.1,
       "decay":4,
       "text":[
-         "a1=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a1=ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "alpha = group_neutralize(log(mdf_ibt_q/assets/ts_delay(mdf_ibt_q/assets, 250)), rank(current_ratio) * 3 + 1);",
          "a2=sales != ts_delay(sales, 10) ? alpha : 0.9 * ts_delay(alpha, 1);",
          "a3 = (-(close-ts_delay(close,5))/ts_delay(close,5)+volume/adv20)/ts_stddev(close,20);",
@@ -498,14 +498,14 @@
          "x = (cash + invested_capital)/liabilities;",
          "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
          "a1=group_neutralize(alpha,ebit/assets + 0.5);",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha1 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a2 = group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a2 = group_neutralize (alpha1, 5 * rank (neutr) + 0.5);",
          "gross_income = revenue - cogs;",
          "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha2 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a2=group_neutralize (alpha2, 5 * rank (neutr) + 0.5);",
          "base = scale(a1)+-0.5*scale(a2);",
          "a3 = is_nan(base) ? group_mean(base,market,1) : base;",
          "a4=group_neutralize(volume/adv20, sales/assets);",
@@ -587,9 +587,9 @@
       "text":[
          "alpha = log(debt/ts_delay(debt,126))+0.5*log(ts_delay(debt,126)/ts_delay(debt,252)) + 0.25*log(ts_delay(debt,252)/ts_delay(debt,378))+ 0.125*log(ts_delay(debt,378)/ts_delay(debt,504));",
          "a1=-alpha;",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha1 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a2= group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a2= group_neutralize (alpha1, 5 * rank (neutr) + 0.5);",
          "base = scale(a1)+scale(a2);",
          "base"
       ],
@@ -604,21 +604,21 @@
       "max_stock_weight":0.03,
       "decay":63,
       "text":[
-         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10);",
+         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 10, factor=1);",
          "alpha = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
          "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
          "gross_income = revenue - cogs;",
          "a1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
-         "alpha = 1/(mdf_oin + 0.001);",
+         "alpha1 = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
-         "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
+         "a2=group_neutralize (alpha1, 5 * rank (neutr) + 0.5);",
          "month_return = close/ts_delay(close,20) - 1;",
          "avg_12_months = (ts_delay(month_return,0)+ts_delay(month_return,20)+ts_delay(month_return,40)+ts_delay(month_return,60)+ts_delay(month_return,80)+ts_delay(month_return,100)+ts_delay(month_return,120)+ts_delay(month_return,140)+ts_delay(month_return,160)+ts_delay(month_return,180)+ts_delay(month_return,200)+ts_delay(month_return,220))/12;",
          "market_portfolio = group_mean(month_return, market, 1);",
          "beta = ts_regression(market_portfolio, month_return, 250, 0, 2);",
-         "alpha = abs(beta) > 0.5 ? rank(avg_12_months*beta) : 0;",
-         "a4 = alpha;",
+         "alpha2 = abs(beta) > 0.5 ? rank(avg_12_months*beta) : 0;",
+         "a4 = alpha2;",
          "base = scale(a1)+-0.5*scale(a2);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "a3 = base1;",
@@ -638,7 +638,7 @@
       "max_stock_weight":0.03,
       "decay":63,
       "text":[
-         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10);",
+         "a1=ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 10, factor=1);",
          "alpha = 1/(mdf_oin + 0.001);",
          "neutr = ts_sum(revenue / assets, 55);",
          "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
@@ -665,8 +665,8 @@
          "a2=group_neutralize (alpha, 5 * rank (neutr) + 0.5);",
          "rota = ebit/assets;",
          "ratio_alpha = income/equity;",
-         "alpha = group_neutralize(rank(ratio_alpha/ts_delay(ratio_alpha,252)-1),rota + 0.5);",
-         "a3=alpha;",
+         "alpha1 = group_neutralize(rank(ratio_alpha/ts_delay(ratio_alpha,252)-1),rota + 0.5);",
+         "a3=alpha1;",
          "base = scale(pasteurize(a1))+scale(pasteurize(a2))+scale(pasteurize(a3));",
          "grmean = group_mean(pasteurize(base), market, 1);",
          "base1 = is_nan(base) ? grmean*rank(ts_corr(returns,ts_delay(grmean,1),10)) : base;",
@@ -727,7 +727,7 @@
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
-         "a2 = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a2 = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "rota = ebit/assets;",
          "roic = (income - dividend)/invested_capital;",
          "roic_alpha = log(roic/ts_delay(roic,126)) + 0.3*log(ts_delay(roic,126)/ts_delay(roic,252)) + 0.09*log(ts_delay(roic,252)/ts_delay(roic,378))+0.027*log(ts_delay(roic,378)/ts_delay(roic,504));",
@@ -752,11 +752,11 @@
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
-         "alpha=-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
-         "a2 =rank(sector) <= 0.15 || rank(sector) >= 0.25 ? alpha*rank(ts_corr(returns,ts_delay(alpha,1),5)) : nan;",
+         "alpha2=-group_neutralize(rank(est_tot_goodwill/goodwill - 1), market)*(1-rank(abs(goodwill-ts_delay(est_tot_goodwill,63)))) -group_neutralize(log(est_sales/sales), market)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
+         "a2 =rank(sector) <= 0.15 || rank(sector) >= 0.25 ? alpha2*rank(ts_corr(returns,ts_delay(alpha2,1),5)) : nan;",
          "x = (cash + invested_capital)/liabilities;",
-         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
-         "a3 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "alpha3 = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a3 = group_neutralize(alpha3,ebit/assets + 0.5);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -796,9 +796,9 @@
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "a2 = -group_neutralize(log(est_sales/sales), subindustry)*(1-rank(abs(sales-ts_delay(est_sales,63))));",
-         "alpha = (sales - cogs + depre_amort)/assets;",
-         "alpha2 = log(alpha/ts_delay(alpha, 210));",
-         "a3 = rank(cap) >= 0.2 ? income != ts_delay(income, 10) ? alpha2 : 0.9 * ts_delay(alpha2, 1) : nan;",
+         "alpha2 = (sales - cogs + depre_amort)/assets;",
+         "alpha3 = log(alpha2/ts_delay(alpha2, 210));",
+         "a3 = rank(cap) >= 0.2 ? income != ts_delay(income, 10) ? alpha3 : 0.9 * ts_delay(alpha3, 1) : nan;",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base"
       ],
@@ -817,14 +817,14 @@
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "x = (cash + invested_capital)/liabilities;",
-         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
-         "a2 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "alpha2 = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a2 = group_neutralize(alpha2,ebit/assets + 0.5);",
          "x = (revenue-cogs-operating_expense-interest_expense)/revenue;",
          "a3 = log(pretax_income/ts_delay(pretax_income,126))+0.5*log(ts_delay(pretax_income,126)/ts_delay(pretax_income,252));",
          "x = (cash + invested_capital+retained_earnings)/liabilities_curr ;",
-         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "alpha3 = (x >= 0.3 ? -x  : 0) + revenue/assets;",
          "rota = ebit/assets;",
-         "a4 = group_neutralize(alpha,rota+0.5);",
+         "a4 = group_neutralize(alpha3,rota+0.5);",
          "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
          "base"
       ],
@@ -849,9 +849,9 @@
          "alpha = log(roic/ts_delay(roic,126))+0.2*log(ts_delay(roic,126)/ts_delay(roic,252))+ log(sales/ts_delay(sales,126)) + 0.2*log(ts_delay(sales,126)/ts_delay(sales,252)) + 0.125*log(ts_delay(sales,252)/ts_delay(sales,378));",
          "alpha1 = rank(1/cap) >= 0.6 ? 1.1*alpha : 0.9*alpha;",
          "a2 = group_neutralize((rank(alpha1)-0.5)^3, neutr);",
-         "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
-         "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
-         "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
+         "alpha2 = (sales - cogs)/mdf_ass / mdf_cse_q;",
+         "alpha3 = (rank(log(alpha2/ts_delay(alpha2, 180))) - 0.5)^3;",
+         "a1 = income != ts_delay(income, 10) ? alpha3 : 0.9 * ts_delay(alpha3, 1);",
          "base = scale(a1) + scale(a2);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1*rank(ts_corr(base1,ts_delay(base1,1),5))"
@@ -871,8 +871,8 @@
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "x = (cash + invested_capital)/liabilities;",
-         "alpha = x <= 0.5 && x >= 0.2 ? x : 0;",
-         "a2 = group_neutralize(alpha,ebit/assets + 0.5);",
+         "alpha2 = x <= 0.5 && x >= 0.2 ? x : 0;",
+         "a2 = group_neutralize(alpha2,ebit/assets + 0.5);",
          "base = scale(a1)+scale(a2);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -891,7 +891,7 @@
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
-         "a2= ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "a2= ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "base = scale(a1)+scale(a2);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1*rank(ts_corr(base1,ts_delay(base1,1),5))"
@@ -934,14 +934,14 @@
          "rota=ebit/assets;",
          "liquid = rank(ts_sum(vwap*volume,62));",
          "group_weight = (liquid > 0.75 ? 4 : liquid > 0.5 ? 3 : liquid > 0.25 ? 2 : liquid > 0 ? 1 : 1);",
-         "alpha = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
-         "a2 = group_neutralize(alpha, 4*rank(rota) + 0.5);",
+         "alpha2 = rank(((eps-est_eps)/ts_stddev(eps,500))) + rank(revenue/assets);",
+         "a2 = group_neutralize(alpha2, 4*rank(rota) + 0.5);",
          "a3= -rank(equity^2)/rank(equity + debt);",
          "rota = ebit/assets;",
          "ratio = income/equity;",
          "ratio_alpha = log(ratio/ts_delay(ratio,126)) + 0.5*log(ts_delay(ratio,126)/ts_delay(ratio,252)) + 0.25*log(ts_delay(ratio,252)/ts_delay(ratio,378)) + 0.125*log(ts_delay(ratio,378)/ts_delay(ratio,502));",
-         "alpha = group_neutralize(ratio_alpha,rota + 0.5);",
-         "a4 = alpha;",
+         "alpha3 = group_neutralize(ratio_alpha,rota + 0.5);",
+         "a4 = alpha3;",
          "base = scale(a1)+scale(a2)+scale(a3)+scale(a4);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -961,11 +961,11 @@
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
          "gross_margin = income/revenue;",
-         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "alpha2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
          "rota = mdf_ebt_q/mdf_ita_q;",
          "meanreq = ts_sum(mdf_rec,63)/63;",
          "meancap = ts_sum(mdf_cap,21)/21;",
-         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "subj = rank(1/cap) <= 0.8 ? alpha2 : 0;",
          "a2 = group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
          "base = scale(a1)+scale(a2);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
@@ -1044,7 +1044,7 @@
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
-         "a2=ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.7, 10);",
+         "a2=ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 10, factor=0.7);",
          "base = scale(a1)+scale(a2);",
          "mygroup = bucket(rank(cap), range='0, 1, 0.02');",
          "base1 = is_nan(base) ? group_mean(pasteurize(base),mygroup,1) : base;",
@@ -1118,11 +1118,11 @@
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
          "a1 = income != ts_delay(income, 10) ? alpha1 : 0.9 * ts_delay(alpha1, 1);",
-         "alpha = rank(log(inventory_turnover/ts_delay(inventory_turnover, 250)));",
-         "alpha2 = group_neutralize(alpha, rank(sales));",
-         "gr = group_rank(rank(sales), alpha2);",
-         "alpha3 = (gr >= 0.7 || gr <= 0.2 ? alpha2 : group_mean(alpha2, rank(sales), 1));",
-         "a2 = alpha3 == alpha3 ? alpha3: 0;",
+         "alpha2 = rank(log(inventory_turnover/ts_delay(inventory_turnover, 250)));",
+         "alpha3 = group_neutralize(alpha2, rank(sales));",
+         "gr = group_rank(rank(sales), alpha3);",
+         "alpha4 = (gr >= 0.7 || gr <= 0.2 ? alpha3 : group_mean(alpha3, rank(sales), 1));",
+         "a2 = alpha4 == alpha4 ? alpha4: 0;",
          "base = scale(a1)+scale(a2);",
          "rank(base)"
       ],
@@ -1259,8 +1259,8 @@
          "lblts = liabilities_curr==liabilities_curr ? liabilities_curr : group_mean(liabilities_curr,5*rank(rota)+0.5,1);",
          "rer = retained_earnings==retained_earnings ? retained_earnings : 0;",
          "x = (csh +rer)/lblts;",
-         "alpha = (x >= 0.3 ? -x  : 0) + revenue/assets;",
-         "a2= group_neutralize(alpha,5*rank(rota)+0.5);",
+         "alpha2 = (x >= 0.3 ? -x  : 0) + revenue/assets;",
+         "a2= group_neutralize(alpha2,5*rank(rota)+0.5);",
          "gross_margin = (revenue-cogs)/revenue;",
          "a3 = rank(ts_delta(current_ratio,80)/ts_delay(current_ratio,80)) +",
          "0.5*rank(log(gross_margin/ts_delay(gross_margin,250)));",
@@ -1297,9 +1297,9 @@
          "gross_income = mdf_rev_q - cogs;",
          "subj1=-group_neutralize(log(est_grossincome/gross_income), subindustry)*(1-rank(abs(ts_delta(gross_income-est_grossincome,63))));",
          "subj2 = rank(1/cap) <= 0.2 ? 1.2*subj1 : 0.9*subj1;",
-         "alpha = x < 1.3 && x > 0.7 ? nan : subj2;",
+         "alpha2 = x < 1.3 && x > 0.7 ? nan : subj2;",
          "meancap = ts_sum(mdf_cap,21)/21;",
-         "a4 = group_neutralize(alpha*rank(ts_corr(returns, ts_delay(alpha,1),5)), 5*rank(meancap)+0.5);",
+         "a4 = group_neutralize(alpha2*rank(ts_corr(returns, ts_delay(alpha2,1),5)), 5*rank(meancap)+0.5);",
          "base = scale(a2)+scale(a3)+scale(a4);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -1320,7 +1320,7 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0;",
          "a3 = -group_neutralize(rank((est_sales-sales)/sales), 4*rank(ebit/assets)+0.5)*(1-rank(sales - ts_delay(est_sales,63)));",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "mygroup = bucket(rank(mdf_cap), range='0, 1, 0.02');",
@@ -1391,8 +1391,8 @@
          "h = ts_max((high+low)/2,100);",
          "l = ts_min((high+low)/2,100);",
          "subj = close < l ? rank(close*volume) : close > h ? -rank(close*volume) : rank(volume)/rank(adv20);",
-         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
-         "a3 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
+         "alpha3 = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "a3 = alpha3*rank(ts_corr(returns,ts_delay(alpha3,1),5));",
          "base=0.7*scale(a1)+scale(a2)+scale(a3);",
          "mygroup = bucket(rank(pasteurize(sales/assets)), range='0, 1, 0.02');",
          "group_neutralize(is_nan(base) ? 0 : base,mygroup)"
@@ -1420,13 +1420,13 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0;",
+         "a2 = sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0;",
          "gross_margin = income/revenue;",
-         "alpha=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
+         "alpha1=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
          "rota = mdf_ebt_q/mdf_ita_q;",
          "meanreq = ts_sum(mdf_rec,63)/63;",
          "meancap = ts_sum(mdf_cap,21)/21;",
-         "subj = rank(1/cap) <= 0.8 ? alpha : 0;",
+         "subj = rank(1/cap) <= 0.8 ? alpha1 : 0;",
          "a3 = group_neutralize((rank(subj)-0.5)^3, 10*rank(revenue/assets)+0.5);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base1 = is_nan(base) ? 0 : base;",
@@ -1462,11 +1462,11 @@
       "max_stock_weight":0.1,
       "decay":3,
       "text":[
-         "a1 = ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5);",
-         "a2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "a1 = ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 5, factor=0.5);",
+         "a2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 15, factor=0.8)* ts_decay_exp_window((rank(vwap)/rank(close)), 5, factor=0.8);",
          "a3 =(rank((sign(ts_delta(volume, 1)) * (-1 * ts_delta(close, 1))/power(volume, 1.3))+rank (ts_sum((high+low)/2-close, 5)))*power (rank(volume)/rank(adv20), 1.21))/(1+0.15*rank (max (high-low, max (abs (ts_delay(close, 1)-high), abs (ts_delay(close, 1)-low)))));",
          "x = snt_ratio==snt_ratio ? snt_ratio : 2;",
-         "a4 = x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 0.95, 8);",
+         "a4 = x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 8, factor=0.95);",
          "mygroup = bucket(rank(pasteurize(mdf_cap)), range='0, 1, 0.02');",
          "yee = scale(a1)+scale(a2)+scale(a2)+scale(a4);",
          "group_neutralize((rank(yee)-0.5)^3,mygroup)"
@@ -1483,7 +1483,7 @@
       "decay":3,
       "text":[
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
-         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5);",
+         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),5,factor=0.5);",
          "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
          "a1 = alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
          "a2 = rank(((1 - rank((ts_stddev(returns, 2) / ts_stddev(returns, 5)))) + (1 - rank(ts_delta(close, 1)))))+0.55*rank(volume)/rank(adv20);",
@@ -1502,8 +1502,8 @@
       "max_stock_weight":0.03,
       "decay":4,
       "text":[
-         "a1 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21);",
-         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "a1 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 21, factor=0.6);",
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 15, factor=0.80)* ts_decay_exp_window((rank(vwap)/rank(close)), 5, factor=0.8);",
          "alpha = subj;",
          "a2 = alpha;",
          "res = scale(a1)+scale(a2);",
@@ -1520,9 +1520,9 @@
       "max_stock_weight":0.03,
       "decay":2,
       "text":[
-         "al1 = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
-         "a1=ts_decay_exp_window(al1,0.6,5);",
-         "a2 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20),0.6, 21);",
+         "al1 = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 5, factor=0.85);",
+         "a1=ts_decay_exp_window(al1,5,factor=0.6);",
+         "a2 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20),21, factor=0.6);",
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
          "subj = rank(volume)/rank(adv20);",
          "a3 = x < 1.3 && x > 0.7 ? 0 : subj;",
@@ -1541,10 +1541,10 @@
       "max_stock_weight":0.03,
       "decay":4,
       "text":[
-         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
-         "subj1 = ts_decay_exp_window(alpha,0.6,5);",
+         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 5, factor=0.85);",
+         "subj1 = ts_decay_exp_window(alpha,5,factor=0.6);",
          "subj2 = rank(-1 * ts_corr(rank(high),rank(volume),5))* rank(rank(volume)/rank(adv20))*rank(rank(vwap)/rank(close))*(1+2*rank (correlation (est_sales, sales, 5)));",
-         "subj3 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21);",
+         "subj3 = rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 21, factor=0.6);",
          "a = 2*scale(subj1)+scale(subj2)+3*scale(subj3);",
          "a1 = is_nan(a) ? 0 : a;",
          "a1*rank(ts_corr(returns,ts_delay(a1,1),5))"
@@ -1569,7 +1569,7 @@
          "subj2 = rank(volume)/rank(adv20);",
          "subj11 = is_nan(subj1) ? 0 : subj1;",
          "subj22 = is_nan(subj2) ? 0 : subj2;",
-         "subj3 = ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 0.5,5);",
+         "subj3 = ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 5,factor=0.5);",
          "subj33 = is_nan(subj3) ? 0 : subj3;",
          "a = scale(subj11)+scale(subj22) + scale(subj33);",
          "a*rank(ts_corr(returns,ts_delay(a,1),5))"
@@ -1588,8 +1588,8 @@
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
          "alpha = ts_rank(volume*rank((high+low)/2 - close), 10);",
          "subj=alpha*rank(ts_corr(returns,ts_delay(alpha,1),5));",
-         "alpha = x < 1.2 && x > 0.8 ? nan : subj;",
-         "alpha"
+         "alpha1 = x < 1.2 && x > 0.8 ? nan : subj;",
+         "alpha1"
       ],
       "region":"USA",
       "delay":0
@@ -1850,7 +1850,7 @@
       "max_stock_weight":0.03,
       "decay":2,
       "text":[
-         "alpha = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10);",
+         "alpha = ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3);",
          "subj = rank(1/cap) <= 0.8 && rank(1/cap) >= 0.4 ? nan : alpha;",
          "subj*rank(ts_corr(returns, ts_delay(subj,1),5))"
       ],
@@ -1923,7 +1923,7 @@
          "req = return_equity;",
          "meanreq = ts_sum(req,63)/63;",
          "alpha1 = rank(1/cap) <= 0.8 && rank(1/cap) >= 0.6 ? (rank(alpha)-0.5)^3 : 0;",
-         "ts_decay_exp_window(alpha1*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)),0.6,63)"
+         "ts_decay_exp_window(alpha1*rank(scale(ts_delta(close,63))/ts_delta(alpha,63)),63,factor=0.6)"
       ],
       "region":"EUR",
       "delay":1
@@ -2051,7 +2051,7 @@
          "meancap = ts_sum(mdf_cap,21)/21;",
          "meanrota = ts_sum(mdf_rac,21)/21;",
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
-         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha1 = x < 1.3 && x > 0.7 ? 0 : subj;",
          "group_neutralize(subj*rank(ts_corr(returns,ts_delay(subj,1),5))*(1+rank(ts_skewness(returns, 252))), 5*rank(meanrota)+0.5) "
       ],
       "region":"USA",
@@ -2071,7 +2071,7 @@
          "meancap = ts_sum(mdf_cap,21)/21;",
          "meanrota = ts_sum(mdf_rac,21)/21;",
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
-         "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
+         "alpha1 = x < 1.3 && x > 0.7 ? 0 : subj;",
          "group_neutralize(subj*rank(ts_corr(returns,ts_delay(subj,1),5))*(1+rank(ts_skewness(returns, 252))), 5*rank(meanrota)+0.5) "
       ],
       "region":"USA",
@@ -2089,7 +2089,7 @@
          "alpha = log(x/ts_delay(x, 126))+0.5*log(ts_delay(x,126)/ts_delay(x, 252))+0.25*log(ts_delay(x,252)/ts_delay(x, 378));",
          "subj = rank(1/cap)<0.8 ? alpha : nan;",
          "mean = ts_sum(cap,21)/21;",
-         "group_neutralize(ts_decay_exp_window(subj,0.9,63), 5*rank(mean)+0.5) "
+         "group_neutralize(ts_decay_exp_window(subj,63,factor=0.9), 5*rank(mean)+0.5) "
       ],
       "region":"USA",
       "delay":1
@@ -2146,7 +2146,7 @@
       "max_stock_weight":0.1,
       "decay":0,
       "text":[
-         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.75,5)"
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),5,factor=0.75)"
       ],
       "region":"EUR",
       "delay":0
@@ -2159,8 +2159,8 @@
       "max_stock_weight":0.03,
       "decay":0,
       "text":[
-         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5);",
-         "ts_decay_exp_window(alpha,0.6,5)"
+         "alpha = (1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 5, factor=0.85);",
+         "ts_decay_exp_window(alpha,5,factor=0.6)"
       ],
       "region":"EUR",
       "delay":0
@@ -2251,7 +2251,7 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0"
       ],
       "region":"ASI",
       "delay":1
@@ -2268,7 +2268,7 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0"
       ],
       "region":"EUR",
       "delay":1
@@ -2370,7 +2370,7 @@
       "max_stock_weight":0.03,
       "decay":3,
       "text":[
-         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.5, 5);",
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 5, factor=0.5);",
          "alpha = subj;",
          "group_neutralize(alpha*rank(ts_corr(returns,ts_delay(alpha,1),5)), sector)"
       ],
@@ -2400,7 +2400,7 @@
       "max_stock_weight":0.03,
       "decay":3,
       "text":[
-         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.45, 5);",
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 5, factor=0.45);",
          "alpha = subj;",
          "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
       ],
@@ -2415,7 +2415,7 @@
       "max_stock_weight":0.03,
       "decay":2,
       "text":[
-         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.45, 5);",
+         "subj = ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 5, factor=0.45);",
          "alpha = subj;",
          "alpha"
       ],
@@ -2430,7 +2430,7 @@
       "max_stock_weight":0.03,
       "decay":2,
       "text":[
-         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5);",
+         "subj = rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 15, factor=0.80)* ts_decay_exp_window((rank(vwap)/rank(close)), 5, factor=0.8);",
          "alpha = subj;",
          "alpha"
       ],
@@ -2666,7 +2666,7 @@
       "decay":2,
       "text":[
          "x = snt_ratio == snt_ratio ? snt_ratio : 2;",
-         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5);",
+         "subj = ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),5,factor=0.5);",
          "alpha = x < 1.3 && x > 0.7 ? 0 : subj;",
          "alpha*rank(ts_corr(returns,ts_delay(alpha,1),5))"
       ],
@@ -2844,7 +2844,7 @@
       "max_stock_weight":0.1,
       "decay":3,
       "text":[
-         "rank((((high * ts_delay(low, 1))^0.5006) - vwap))*ts_decay_exp_window(rank(ts_delay(volume, 0))/rank(adv20), 0.73, 16)"
+         "rank((((high * ts_delay(low, 1))^0.5006) - vwap))*ts_decay_exp_window(rank(ts_delay(volume, 0))/rank(adv20), 16, factor=0.73)"
       ],
       "region":"USA",
       "delay":0
@@ -2858,7 +2858,7 @@
       "decay":45,
       "text":[
          "x = snt_ratio==snt_ratio ? snt_ratio : 2;",
-         "x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 0.95, 8)"
+         "x < 1.5 && x > 0.5 ? 0 : ts_decay_exp_window(rank(((high * low)^0.50006) - vwap), 8, factor=0.95)"
       ],
       "region":"USA",
       "delay":0
@@ -2950,7 +2950,7 @@
       "max_stock_weight":0.03,
       "decay":0,
       "text":[
-         "ts_decay_exp_window(group_neutralize(rank(sales_growth)+rank((revenue-cogs)/assets), 5*rank(current_ratio)+0.5),0.2,50)"
+         "ts_decay_exp_window(group_neutralize(rank(sales_growth)+rank((revenue-cogs)/assets), 5*rank(current_ratio)+0.5),50,factor=0.2)"
       ],
       "region":"USA",
       "delay":1
@@ -2989,7 +2989,7 @@
       "max_stock_weight":0.03,
       "decay":0,
       "text":[
-         "rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.85, 7)"
+         "rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(ts_stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85)"
       ],
       "region":"USA",
       "delay":0
@@ -3002,7 +3002,7 @@
       "max_stock_weight":0.03,
       "decay":4,
       "text":[
-         "ts_decay_exp_window(rank(((high * low)^0.5) - vwap), 0.8, 5)"
+         "ts_decay_exp_window(rank(((high * low)^0.5) - vwap), 5, factor=0.8)"
       ],
       "region":"USA",
       "delay":0
@@ -3015,7 +3015,7 @@
       "max_stock_weight":0.03,
       "decay":2,
       "text":[
-         "rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 0.80, 15)* ts_decay_exp_window((rank(vwap)/rank(close)), 0.8, 5)"
+         "rank(-1 * ts_corr(rank(high),rank(volume),5))* ts_decay_exp_window(rank(volume)/rank(adv20), 15, factor=0.8)* ts_decay_exp_window((rank(vwap)/rank(close)), 5, factor=0.8)"
       ],
       "region":"USA",
       "delay":0
@@ -3028,7 +3028,7 @@
       "max_stock_weight":0.03,
       "decay":4,
       "text":[
-         "rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 0.6, 21)"
+         "rank((((high * low)^0.5) - vwap))*ts_decay_exp_window(rank(volume)/rank(adv20), 21, factor=0.6)"
       ],
       "region":"USA",
       "delay":0
@@ -3707,7 +3707,7 @@
       "max_stock_weight":0.1,
       "decay":2,
       "text":[
-         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.75,5)"
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),5,factor=0.75)"
       ],
       "region":"USA",
       "delay":0
@@ -3720,7 +3720,7 @@
       "max_stock_weight":0.1,
       "decay":5,
       "text":[
-         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5) + 4*rank(vwap)/rank(close)"
+         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 5, factor=0.5) + 4*rank(vwap)/rank(close)"
       ],
       "region":"USA",
       "delay":0
@@ -3733,7 +3733,7 @@
       "max_stock_weight":0.1,
       "decay":4,
       "text":[
-         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.7, 10)"
+         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 10, factor=0.7)"
       ],
       "region":"USA",
       "delay":0
@@ -3746,7 +3746,7 @@
       "max_stock_weight":0.1,
       "decay":0,
       "text":[
-         "ts_decay_exp_window(rank(vwap) / rank(close),0.3,10)"
+         "ts_decay_exp_window(rank(vwap) / rank(close),10,factor=0.3)"
       ],
       "region":"USA",
       "delay":0
@@ -3822,7 +3822,7 @@
          "roc_small = (close - ts_delay(close, 40))/ts_delay(close, 40);",
          "quartal_return = close/ts_delay(close, 65) - 1;",
          "delay_ret = ts_delay(quartal_return, 190);",
-         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 0.3, 20)) : 0"
+         "sign(roc_big) == sign(roc_small) ? rank(ts_decay_exp_window(delay_ret, 20, factor=0.3)) : 0"
       ],
       "region":"USA",
       "delay":1
@@ -3874,7 +3874,7 @@
       "max_stock_weight":0.1,
       "decay":2,
       "text":[
-         "(1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 0.85, 5)"
+         "(1+0.35*ts_skewness(returns, 32))*ts_decay_exp_window(1.1*rank(open)/rank(close) + (high + low)/2 - close, 5, factor=0.85)"
       ],
       "region":"USA",
       "delay":0
@@ -3900,7 +3900,7 @@
       "max_stock_weight":0.1,
       "decay":4,
       "text":[
-         "rank(-1 * ts_corr(rank(high),rank(volume), 3)+0.3*rank(stddev (snt_social_volume, 10))+0.3*rank(ts_covariance(volume, close, 4)))*rank(rank(volume)/rank(adv20))"
+         "rank(-1 * ts_corr(rank(high),rank(volume), 3)+0.3*rank(ts_stddev (snt_social_volume, 10))+0.3*rank(ts_covariance(volume, close, 4)))*rank(rank(volume)/rank(adv20))"
       ],
       "region":"USA",
       "delay":0
@@ -4078,7 +4078,7 @@
       "max_stock_weight":0.0,
       "decay":4,
       "text":[
-         "ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 1, 10)"
+         "ts_decay_exp_window(ts_rank(volume*rank((high+low)/2-close), 125)*rank(1/ts_stddev(close,40)), 10, factor=1)"
       ],
       "region":"USA",
       "delay":0
@@ -4329,7 +4329,7 @@
       "max_stock_weight":0.1,
       "decay":0,
       "text":[
-         "ts_decay_exp_window(ts_rank(volume, 22),0.55,5)"
+         "ts_decay_exp_window(ts_rank(volume, 22),5,factor=0.55)"
       ],
       "region":"USA",
       "delay":0
@@ -4407,7 +4407,7 @@
       "max_stock_weight":0.1,
       "decay":0,
       "text":[
-         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),0.8,5)"
+         "ts_decay_exp_window(sign(ts_skewness(returns, 50)) <= 0 ? ((log(close/ts_delay(close,1)) - group_mean(log(close/ts_delay(close,1)),subindustry,1))*(1+ts_skewness(returns,50))*((high+low)/2 -close)) : ts_rank(volume*rank((high+low)/2 - close), 10),5,factor=0.8)"
       ],
       "region":"USA",
       "delay":0
@@ -4420,7 +4420,7 @@
       "max_stock_weight":0.1,
       "decay":3,
       "text":[
-         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 0.5, 5)"
+         "ts_decay_exp_window(max(-(log(close/ts_delay(close,5)) - group_mean(log(close/ts_delay(close,5)),subindustry,1)), rank(vwap) / rank(close)), 5, factor=0.5)"
       ],
       "region":"USA",
       "delay":0
@@ -4433,7 +4433,7 @@
       "max_stock_weight":0.1,
       "decay":3,
       "text":[
-         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 0.5, 5)"
+         "ts_decay_exp_window((1+ts_skewness(returns, 75))*(1+sign(ts_skewness(returns, 75)))*((high+low)/2-close), 5, factor=0.5)"
       ],
       "region":"USA",
       "delay":0
@@ -4446,7 +4446,7 @@
       "max_stock_weight":0.1,
       "decay":2,
       "text":[
-         "ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),0.5,5)"
+         "ts_decay_exp_window(max(ts_corr(close, open, 10), volume/adv20) + rank(vwap) / rank(close),5,factor=0.5)"
       ],
       "region":"USA",
       "delay":0
@@ -4459,7 +4459,7 @@
       "max_stock_weight":0.1,
       "decay":1,
       "text":[
-         "ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 0.3,10)"
+         "ts_decay_exp_window((volume/adv20) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30)), 10,factor=0.3)"
       ],
       "region":"USA",
       "delay":1
@@ -4472,7 +4472,7 @@
       "max_stock_weight":0.1,
       "decay":1,
       "text":[
-         "ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 0.5,5)"
+         "ts_decay_exp_window(log((volume/adv20 + (rank(vwap) / rank(close))) + ts_sum((high+low)/2,3)/3 -min(close, ts_sum(close,4)/4+ts_stddev(close,30))), 5, factor=0.5)"
       ],
       "region":"USA",
       "delay":0

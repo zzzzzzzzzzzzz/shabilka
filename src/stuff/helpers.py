@@ -88,7 +88,9 @@ class BasicGrinder(object):
                             params[key].append(attr)
 
                 for row in self.recipe.template:
-                    res += [row.format(**dict(zip(self.recipe.variables, new_vars)))]
+                    new_row = row.format(**dict(zip(self.recipe.variables, new_vars)))
+                    if new_row:
+                        res += [new_row]
                 self._res = res
                 print(params)
                 self._params = return_dict_combinations(params).__iter__()
@@ -126,7 +128,10 @@ def read_init(classname):
 
         res = []
         for record in records_json:
-            res.append(class_(**record))
+            try:
+                res.append(class_(**record))
+            except Exception as e:
+                pass
 
         return res
 

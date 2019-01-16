@@ -47,3 +47,11 @@ CREATE TABLE IF NOT EXISTS shabilka_db.alphas_stats (
   right_corr FLOAT,
   CONSTRAINT FOREIGN KEY `alphas_foreign_key` (`alpha_id`) REFERENCES alphas(`id`)
 );
+
+CREATE TABLE IF NOT EXISTS shabilka_db.data_words (
+  id INTEGER PRIMARY KEY AUTO_INCREMENT,
+  data_name VARCHAR(255) NOT NULL,
+  region VARCHAR(10) NOT NULL,
+  delay INTEGER NOT NULL,
+  INDEX `option_search_index` (`data_name`, `region`, `delay`)
+);
