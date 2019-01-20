@@ -89,7 +89,7 @@
          "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
          "gross_margin = income/revenue;",
          "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
-         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(ts_stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "alpha = (sales - cogs)/mdf_ass / mdf_cse_q;",
          "alpha1 = (rank(log(alpha/ts_delay(alpha, 180))) - 0.5)^3;",
@@ -190,7 +190,7 @@
          "a1=-group_neutralize(log(est_tot_assets/assets),market)*(1-rank(abs(assets-ts_delay(est_tot_assets,63)))) + revenue/assets;",
          "gross_margin = income/revenue;",
          "a2=-(-log(gross_margin/ts_delay(gross_margin,250)) + revenue/assets);",
-         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
+         "a3=rank(-1 * ts_corr(rank(high),rank(volume),15)+0.2*rank(ts_stddev (returns, 10))-0.15*rank(ts_covariance(volume, close, 4)))*ts_decay_exp_window(rank(volume)/rank(adv20), 7, factor=0.85);",
          "base = scale(a1)+scale(a2)+scale(a3);",
          "base1 = is_nan(base) ? group_mean(base,market,1) : base;",
          "base1"
@@ -2844,7 +2844,7 @@
       "max_stock_weight":0.1,
       "decay":3,
       "text":[
-         "rank((((high * ts_delay(low, 1))^0.5006) - vwap))*ts_decay_exp_window(rank(ts_delay(volume, 0))/rank(adv20), 16, factor=0.73)"
+         "rank((((high * ts_delay(low, 1))^0.5006) - vwap))*ts_decay_exp_window(rank(ts_delay(volume, 5))/rank(adv20), 16, factor=0.73)"
       ],
       "region":"USA",
       "delay":0

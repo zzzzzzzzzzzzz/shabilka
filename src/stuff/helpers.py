@@ -99,6 +99,8 @@ class BasicGrinder(object):
             except StopIteration as e:
                 print("Permutations ended, stopping")
                 raise e
+            except ValueError as e:
+                raise e
         except ValueError as e:
             print("Incompaitable parameters")
             print(str(e))

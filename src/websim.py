@@ -208,6 +208,7 @@ OPERATOR_WORDS = {
     "ts_partial_corr",
     "ts_percentage",
     "ts_poly_regression",
+    'ts_rank',
     "ts_returns",
     "ts_scale",
     "ts_skewness",
@@ -228,7 +229,8 @@ OPERATOR_WORDS = {
     "target",
     "factor",
     "nan",
-    "NaN"
+    "NaN",
+    "range"
 }
 
 DATA_WORDS = {
@@ -1481,7 +1483,7 @@ class Alpha(object):
         operator_words_list = []
         data_words_list = []
         for row in self.text:
-            for word in re.findall(r'\b[a-zA-Z]\w+\b', row):
+            for word in re.findall(r'\b[a-zA-Z_]+[0-9_]*[a-zA-Z_]*\b', row): # допускает такие переменные как x, alpha2b, alpha_2b
                 word_lower = word.lower()
                 found = False
                 if other_words_flag:
@@ -1537,9 +1539,9 @@ class Alpha(object):
                     delay=self.delay
                 )
                 cursor.execute(query)
-            if not cursor.fetchone():
-                print("found incompaitable with {} {} {} special word '{}'".format(self.universe.lower(), self.region.lower(), self.delay, word))
-                return False
+                if not cursor.fetchone():
+                    print("found incompaitable with {} {} {} special word '{}'".format(self.universe.lower(), self.region.lower(), self.delay, word))
+                    return False
 
         return True
 
@@ -1556,6 +1558,12 @@ class Alpha(object):
             result = tmp
 
         return result
+
+
+class Actions(ActionChains):
+    def wait(self, time_s: float):
+        self._actions.append(lambda: time.sleep(time_s))
+        return self
 
 
 class WebSim(object):
@@ -1660,9 +1668,10 @@ class WebSim(object):
         """
         assert isinstance(alpha, Alpha), 'alpha must be Alpha class instance'
         alert_message = None
+        self.driver.get('https://www.worldquantvrc.com/simulate')
+        self.driver.find_element_by_id("test-flowsexprCode").click()  # switching to fast expressions
+        alert_container = self.driver.find_element_by_class_name('sim-alert-container')
         try:
-            self.driver.get('https://www.worldquantvrc.com/simulate')
-            self.driver.find_element_by_id("test-flowsexprCode").click() # switching to fast expressions
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
             input_form = self.driver.find_element_by_class_name('CodeMirror-code')
@@ -1685,21 +1694,20 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
-            input_form.click()
-            set_input_action = ActionChains(self.driver)
+            input_form.click() # фокусируемся на поле ввода
+
+            input_action = Actions(self.driver)
 
             l = len(alpha.text)
             for idx in range(l):
-                set_input_action.send_keys(alpha.text[idx])
-
+                input_action.send_keys(alpha.text[idx])
                 if idx != l-1:
-                    set_input_action.send_keys(Keys.SPACE, Keys.ESCAPE, Keys.ENTER)
-                else:
-                    set_input_action.send_keys(Keys.ESCAPE)
+                    input_action.key_down(Keys.LEFT_SHIFT).send_keys(Keys.ENTER).key_up(Keys.LEFT_SHIFT)
 
-            # set_input_action.send_keys(alpha.text_str)
-            set_input_action.move_to_element(settings_button)
-            set_input_action.perform()
+            input_action.perform()
+
+            self.driver.find_element_by_tag_name('body').click()
+            self.driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
@@ -1767,8 +1775,6 @@ class WebSim(object):
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
-
-            alert_container = self.driver.find_element_by_class_name('sim-alert-container')
 
             classified = self.driver.find_element_by_id('percentileStats').get_attribute('innerText').upper()
             if classified:
