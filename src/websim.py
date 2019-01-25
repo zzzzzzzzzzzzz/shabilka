@@ -191,6 +191,7 @@ OPERATOR_WORDS = {
     "ts_count_nans",
     "ts_covariance",
     "ts_decay_exp_window",
+    "ts_decay_linear_window"
     "ts_decay_linear",
     "ts_delay",
     "ts_delta",
@@ -1679,6 +1680,7 @@ class WebSim(object):
             # self.driver.execute_script('''
             #
             # ''', input_form)
+            body = self.driver.find_element_by_tag_name('body')
             settings_button = self.driver.find_element_by_class_name('test-settingslink')
             region_select = Select(self.driver.find_element_by_name('region'))
             universe_select = Select(self.driver.find_element_by_name('univid'))
@@ -1703,11 +1705,20 @@ class WebSim(object):
                 input_action.send_keys(alpha.text[idx])
                 if idx != l-1:
                     input_action.key_down(Keys.LEFT_SHIFT).send_keys(Keys.ENTER).key_up(Keys.LEFT_SHIFT)
+                else:
+                    input_action.send_keys(Keys.ESCAPE)
 
             input_action.perform()
 
-            self.driver.find_element_by_tag_name('body').click()
-            self.driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
+            go_to_top = Actions(self.driver)
+            go_to_top.click(body)
+            go_to_top.send_keys_to_element(body, Keys.CONTROL + Keys.HOME)
+
+            go_to_top.perform()
+
+            go_to_end = Actions(self.driver)
+            go_to_end.click(body)
+            go_to_end.send_keys_to_element(body, Keys.CONTROL + Keys.END)
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
@@ -1767,11 +1778,20 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
+            go_to_end.perform()
+
+            body.send_keys(Keys.ESCAPE)
+
             sim_action_simulate.click()
             self.driver.implicitly_wait(300)
+
+            go_to_top.perform()
+
             test_btn = self.driver.find_element_by_id('test-statsBtn')
             test_btn.click()
             self.driver.implicitly_wait(self.implicitly_wait)
+
+            go_to_top.perform()
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
@@ -1833,6 +1853,8 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
+            go_to_top.perform()
+
             submittable = alert_container.get_attribute('innerText')
             submittable_flag = False
             if 'success' in submittable.lower():
@@ -1843,6 +1865,8 @@ class WebSim(object):
             alpha.stats['submittable'] = submittable_flag
             alpha.stats['submitted'] = False
             alpha.simulated = True
+
+            go_to_top.perform()
 
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')

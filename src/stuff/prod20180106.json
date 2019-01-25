@@ -1681,9 +1681,9 @@
          "alpha2 = group_neutralize(weight, 5*rank(meancap)+0.5);",
          "alpha22 = (bookvalue_ps == ts_delay(bookvalue_ps, 10) ? 0.9 * ts_delay(alpha2, 1) : alpha2);",
          "subj2 = alpha22 ? alpha22 : 0;",
-         "subj1 = subj1 == subj1 ? subj1 :group_mean(subj1,market,1);",
-         "subj2 = subj2 == subj2 ? subj2 : group_mean(subj2,market,1);",
-         "scale(subj1)+1.1*scale(subj2)"
+         "subj11 = subj1 == subj1 ? subj1 :group_mean(subj1,market,1);",
+         "subj22 = subj2 == subj2 ? subj2 : group_mean(subj2,market,1);",
+         "scale(subj11)+1.1*scale(subj22)"
       ],
       "region":"USA",
       "delay":1

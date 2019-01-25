@@ -36,6 +36,7 @@ class BasicGrinder(object):
         print("Got {} alphas".format(len(self.alphas)))
         print("Gor recipe {}".format(self.recipe.id))
         print("Number of variables {}".format(self.variables_number))
+        print("Begin index is {}".format(begin_index))
 
     def __iter__(self):
         if not self.recipe.commutate:
@@ -54,6 +55,41 @@ class BasicGrinder(object):
         new_alpha_params_dict['components'] = self._current_components
         return new_alpha_params_dict
 
+    def _rearm_permutations(self):
+        alphas_permutation = self._permutations.__next__()
+        res = []
+        new_vars = []
+        params = {
+            'region': [],
+            'universe': [],
+            'decay': [],
+            'delay': [],
+            'max_stock_weight': [],
+            'neutralization': [],
+            'pasteurize': [],
+            'nanhandling': [],
+        }
+        self._current_components = []
+        for idx, alpha in enumerate(alphas_permutation):
+            obfuscated = alpha.obfuscate_text(self.recipe.variables[idx])
+            self._current_components.append(alpha.hash)
+            new_vars.append("var{}".format(idx))
+            obfuscated[-1] = obfuscated[-1].replace(';', '')
+            obfuscated[-1] = "var{idx}={alpha_end};".format(idx=idx, alpha_end=obfuscated[-1])
+            res += obfuscated
+            for key, val in params.items():
+                attr = getattr(alpha, key)
+                if attr not in val:
+                    params[key].append(attr)
+
+        for row in self.recipe.template:
+            new_row = row.format(**dict(zip(self.recipe.variables, new_vars)))
+            if new_row:
+                res += [new_row]
+        self._res = res
+        print(params)
+        self._params = return_dict_combinations(params).__iter__()
+
     def _next(self):
         try:
             new_alpha = Alpha(**self._get_next_params())
@@ -61,45 +97,10 @@ class BasicGrinder(object):
         except StopIteration:
             print("BasicGrinder: beginning to work with new permutation")
             try:
-                alphas_permutation = self._permutations.__next__()
-                res = []
-                new_vars = []
-                params = {
-                    'region': [],
-                    'universe': [],
-                    'decay': [],
-                    'delay': [],
-                    'max_stock_weight': [],
-                    'neutralization': [],
-                    'pasteurize': [],
-                    'nanhandling': [],
-                }
-                self._current_components = []
-                for idx, alpha in enumerate(alphas_permutation):
-                    obfuscated = alpha.obfuscate_text(self.recipe.variables[idx])
-                    self._current_components.append(alpha.hash)
-                    new_vars.append("var{}".format(idx))
-                    obfuscated[-1] = obfuscated[-1].replace(';', '')
-                    obfuscated[-1] = "var{idx}={alpha_end};".format(idx=idx, alpha_end=obfuscated[-1])
-                    res += obfuscated
-                    for key, val in params.items():
-                        attr = getattr(alpha, key)
-                        if attr not in val:
-                            params[key].append(attr)
-
-                for row in self.recipe.template:
-                    new_row = row.format(**dict(zip(self.recipe.variables, new_vars)))
-                    if new_row:
-                        res += [new_row]
-                self._res = res
-                print(params)
-                self._params = return_dict_combinations(params).__iter__()
-                new_alpha = Alpha(**self._get_next_params())
-                return new_alpha
+                self._rearm_permutations()
+                return self._next()
             except StopIteration as e:
                 print("Permutations ended, stopping")
-                raise e
-            except ValueError as e:
                 raise e
         except ValueError as e:
             print("Incompaitable parameters")

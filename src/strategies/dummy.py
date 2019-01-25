@@ -98,7 +98,8 @@ if __name__=="__main__":
                     print("Exiting by keyboard interrupt")
                     exit(0)
                 else:
-                    begin_index = idx+1
+                    idx += 1
+                    begin_index = idx
 
     else:
         print(bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance" + bcolors.ENDC)
