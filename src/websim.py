@@ -1796,7 +1796,7 @@ class WebSim(object):
             if debug:
                 self.driver.save_screenshot(str(datetime.datetime.now())+'.png')
 
-            classified = self.driver.find_element_by_id('percentileStats').get_attribute('innerText').upper()
+            classified = self.driver.find_element_by_id('percentileStats').find_element_by_class_name('panel-title').get_attribute('innerText').upper()
             if classified:
                 alpha.stats['classified']=classified
 

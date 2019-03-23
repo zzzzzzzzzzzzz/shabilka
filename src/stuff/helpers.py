@@ -3,6 +3,8 @@ import argparse
 import json
 
 import itertools
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from websim import Alpha, Recipe
 
@@ -160,25 +162,22 @@ def sendemail_via_gmail(gmail_user, gmail_password, to, subject, body):
     assert isinstance(to, list), "to must be list of emails"
     import smtplib
 
+    msg = MIMEMultipart()  # create a message
     sent_from = gmail_user
-
-    email_text = """\  
-    From: %s  
-    To: %s  
-    Subject: %s
-
-    %s
-    """ % (sent_from, ", ".join(to), subject, body)
+    msg['From'] = sent_from
+    msg['To'] = to
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
 
     try:
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         server.ehlo()
         server.login(gmail_user, gmail_password)
-        server.sendmail(sent_from, to, email_text)
+        server.send_message(msg=msg, from_addr=sent_from, to_addrs=[to])
         server.close()
 
         print('Email sent!')
-    except:
+    except Exception:
         print('Something went wrong during email notification sending')
 
 if __name__ == "__main__":

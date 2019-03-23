@@ -82,7 +82,7 @@ if __name__=="__main__":
 
                     print("Websim said: {}".format(mes))
 
-                    if new_alpha.stats['classified'] != 'INFERIOR':
+                    if (new_alpha.stats['classified'] != 'INFERIOR') and float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.1:
                         sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
 
                     """
