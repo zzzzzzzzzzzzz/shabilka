@@ -73,7 +73,7 @@ class BasicGrinder(object):
         }
         self._current_components = []
         for idx, alpha in enumerate(alphas_permutation):
-            obfuscated = alpha.obfuscate_text(self.recipe.variables[idx])
+            obfuscated = alpha.obfuscate_text(self.recipe.variables[idx], 'xxx')
             self._current_components.append(alpha.hash)
             new_vars.append("var{}".format(idx))
             obfuscated[-1] = obfuscated[-1].replace(';', '')

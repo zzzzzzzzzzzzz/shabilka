@@ -6,6 +6,8 @@ import time
 import datetime
 
 import os
+from typing import List, Optional
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
@@ -19,6 +21,8 @@ from hashlib import md5
 
 import config
 from string import Formatter
+
+flatten = lambda l: [item for sublist in l for item in sublist]
 
 DELAYS_DISTRIBUTION = {
     "PRICE_VOLUME_DATA": {0,1},
@@ -1559,6 +1563,113 @@ class Alpha(object):
             result = tmp
 
         return result
+
+    @classmethod
+    def commutative(cls, alphas_list, action="+", params_alpha_idx=None, params=None):
+        """
+        Adds alphas from alphas_list as
+        alpha_1 action alpha_2 action ... action alpha_n
+        and returns the new alpha.
+        :param action: commutative operator. Such as "+", "-" or "*"
+        :param alphas_list: List of Alpha instances
+        :param params_alpha_idx: will inherit params from alphas_list[params_alpha_idx], if not None will use this
+        :param params: if not None and params_alpha_idx is None the new alpha inherit these params
+        :return: new cls object
+        """
+        assert isinstance(alphas_list, List[cls]), "Alphas list should be of type {}".format(cls)
+        assert isinstance(params_alpha_idx, Optional[int]), "params_alpha_idx should be int or None"
+        assert isinstance(params, Optional[dict]), "params should be dict or None"
+
+        if (params_alpha_idx is None) and (params is None):
+            raise ValueError("You should pass params_alpha_idx or params dict")
+
+        new_alpha_text = []
+        for i in range(len(alphas_list)):
+            current_alpha_text = alphas_list[i].text.copy()
+            current_alpha_text[-1] = "toadd_{}=".format(i) + current_alpha_text[-1] + ";"
+            new_alpha_text += current_alpha_text
+
+        new_alpha_text += ["tosimulate=" + ["toadd_{}".format(j) for j in range(len(alphas_list))].join(action)]
+
+        new_components = list(set(flatten([alphas_list[i].components for i in range(len(alphas_list))])))
+        if params_alpha_idx is not None:
+            # inherit params
+            inherit_alpha = alphas_list[params_alpha_idx]
+            new_params = {
+                "region": inherit_alpha.region,
+                "universe": inherit_alpha.universe,
+                "delay": inherit_alpha.delay,
+                "decay": inherit_alpha.decay,
+                "max_stock_weight": inherit_alpha.max_stock_weight,
+                "neutralization": inherit_alpha.neutralization,
+                "pasteurize": inherit_alpha.pasteurize,
+                "nanhandling": inherit_alpha.nanhandling,
+                "text": new_alpha_text,
+                "components": new_components
+            }
+            return Alpha(**new_params)
+        else:
+            # use params
+            params['text'] = new_alpha_text
+            params['components'] = new_components
+            return Alpha(**params)
+
+    @classmethod
+    def wrap_str_function(cls, alphas_list, func, params_alpha_idx=None, params=None, *args, **kwargs):
+        """
+        Wraps alphas to websim function with params.
+        Unsafe method, you should figure out which params are required for this function.
+        Which of them are named and not named and if the special order is required.
+        :param params: if not None and params_alpha_idx is None the new alpha inherit these params
+        :param params_alpha_idx: will inherit params from alphas_list[params_alpha_idx], if not None will use this
+        :param alphas_list: list of Alpha objects
+        :param func: str name of the function
+        :param args: list of argument for this websim function
+        :param kwargs: dictionary of named arguments for this websim function
+        :return: new cls object wrapped in func
+        """
+        assert isinstance(alphas_list, List[cls]), "Alphas list should be of type {}".format(cls)
+        assert isinstance(params_alpha_idx, Optional[int]), "params_alpha_idx should be int or None"
+        assert isinstance(params, Optional[dict]), "params should be dict or None"
+        assert isinstance(func, str), "func must be string name of the websim function"
+
+        if (params_alpha_idx is None) and (params is None):
+            raise ValueError("You should pass params_alpha_idx or params dict")
+
+        new_alpha_text = []
+        for i in range(len(alphas_list)):
+            current_alpha_text = alphas_list[i].text.copy()
+            current_alpha_text[-1] = "toapply_{}=".format(i) + current_alpha_text[-1] + ";"
+            new_alpha_text += current_alpha_text
+
+        pass_to_func = ["toapply_{}".format(j) for j in range(len(alphas_list))] + args + ["{}={}".format(key, value) for key,value in kwargs.items()]
+        new_alpha_text += ["tosimulate={}(".format(func) + pass_to_func.join(',')]
+        new_components = list(set(flatten([alphas_list[i].components for i in range(len(alphas_list))])))
+
+        if params_alpha_idx is not None:
+            # inherit params
+            inherit_alpha = alphas_list[params_alpha_idx]
+            new_params = {
+                "region": inherit_alpha.region,
+                "universe": inherit_alpha.universe,
+                "delay": inherit_alpha.delay,
+                "decay": inherit_alpha.decay,
+                "max_stock_weight": inherit_alpha.max_stock_weight,
+                "neutralization": inherit_alpha.neutralization,
+                "pasteurize": inherit_alpha.pasteurize,
+                "nanhandling": inherit_alpha.nanhandling,
+                "text": new_alpha_text,
+                "components": new_components
+            }
+            return Alpha(**new_params)
+        else:
+            # use params
+            params['text'] = new_alpha_text
+            params['components'] = new_components
+            return Alpha(**params)
+
+
+
 
 
 class Actions(ActionChains):
