@@ -1,0 +1,417 @@
+# coding=utf-8
+import datetime
+import logging
+import time
+
+import os
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.ui import WebDriverWait
+
+from shabilka import basic
+from init.config import CHROMEDRIVER_PATH, EMAIL, PASSWORD, LOGDIR
+
+
+class Actions(ActionChains):
+    def wait(self, time_s: float):
+        self._actions.append(lambda: time.sleep(time_s))
+        return self
+
+
+class WebSim(object):
+    """
+    Базовый класс вебсим, через него взаимодействуем с сайтом wq
+    """
+    def __init__(self, implicitly_wait=120):
+
+        self.logger = logging.getLogger(self.__class__.__name__)
+        try:
+            os.makedirs(LOGDIR)
+        except OSError:
+            pass
+        hdlr = logging.FileHandler(os.path.join(LOGDIR, '{}.log'.format(self.__class__.__name__)))
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        self.logger.addHandler(hdlr)
+        self.logger.setLevel(logging.INFO)
+
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('window-size=1366x768')
+        self.driver = webdriver.Chrome(chrome_options=options,
+                                       executable_path=CHROMEDRIVER_PATH)
+        self.implicitly_wait = implicitly_wait
+        self.driver.implicitly_wait(
+            implicitly_wait)  # будет ждать implicitly_wait секунд появления элемента на странице
+        self.date = datetime.datetime.now().__str__().split()[0]
+        self.login_time = -1
+        
+        self.simulate_logdir = os.path.join(LOGDIR, 'simulate/')
+        try:
+            os.makedirs(self.simulate_logdir)
+        except Exception:
+            pass
+
+    def __del__(self):
+        """
+        Не забываем убивать драйвер (процесс хрома)
+        :return: None
+        """
+        self.driver.quit()
+
+    def login(self, relog=False):
+        """
+        Данные берутся из конфига
+        :param relog: если флаг relog True, то предварительно идёт запрос страницы симуляции, чтобы после логина
+        перекинуло куда надо
+        :return: True в случае успешного логина, False иначе
+        """
+        try:
+            if relog:
+                self.driver.get('https://www.worldquantvrc.com/simulate')
+
+            self.driver.get('https://www.worldquantvrc.com/login')
+            try:
+                self.driver.implicitly_wait(10)
+                self.driver.find_element_by_class_name('cookie-consent-accept').click()
+            except Exception:
+                print("Already signed cookie")
+            self.driver.implicitly_wait(self.implicitly_wait) # setting implicitly wait back
+            log_pass = self.driver.find_elements_by_class_name('form-control')
+            log_pass[0].clear(), log_pass[0].send_keys(EMAIL)
+            log_pass[1].clear(), log_pass[1].send_keys(PASSWORD)
+            log_pass[1].send_keys(Keys.RETURN)
+
+            self.login_time = time.time()
+            time.sleep(10)
+            print("Login successuful")
+            return True
+        except Exception as e:
+            self.logger.error("Couldn't log in")
+            self.logger.error(str(e))
+            return False
+            # find dashboard element
+
+    def _get_stats(self):
+        """
+        Возвращает статистику год за годом
+        :return: list of dicts
+        """
+        table = self.driver.find_elements_by_class_name('standard-row')
+        stats = []
+        for row_id, row in enumerate(table):
+            data = row.find_elements_by_tag_name('td')
+            stats.append(
+                {
+                    'year': data[1].text,
+                    'booksize': data[2].text,
+                    'long_count': data[3].text,
+                    'short_count': data[4].text,
+                    'pnl': data[5].text,
+                    'sharpe': data[6].text,
+                    'fitness': data[7].text,
+                    'returns': data[8].text,
+                    'draw_down': data[9].text,
+                    'turn_over': data[10].text,
+                    'margin': data[11].text
+                }
+            )
+        return stats
+
+    def simulate_alpha(self, alpha, debug=False):
+        """
+        Симулирует одну альфу, выставляет настройки, вставляет текст, жмёт на нужные кнопки
+        :param alpha: объект класса Alpha
+        :return: ничего не возвращает, выкинет исключение в случае ошибки
+        """
+        assert isinstance(alpha, basic.Alpha), 'alpha must be Alpha class instance'
+        alert_message = None
+        self.driver.get('https://www.worldquantvrc.com/simulate')
+        if debug:
+            self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+        self.driver.find_element_by_id("test-flowsexprCode").click()  # switching to fast expressions
+        alert_container = self.driver.find_element_by_class_name('sim-alert-container')
+        try:
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+            input_form = self.driver.find_element_by_class_name('CodeMirror-code')
+            # TODO: remove CodeMirror events from the input form. It substitutes symbols
+            # self.driver.execute_script('''
+            #
+            # ''', input_form)
+            body = self.driver.find_element_by_tag_name('body')
+            self.driver.execute_script("$(\"head\").append(\"<style>.CodeMirror-hints { display:None }</style>\")")
+
+            settings_button = self.driver.find_element_by_class_name('test-settingslink')
+            region_select = Select(self.driver.find_element_by_name('region'))
+            universe_select = Select(self.driver.find_element_by_name('univid'))
+            delay_select = Select(self.driver.find_element_by_name('delay'))
+            neutralization_select = Select(self.driver.find_element_by_name('opneut'))
+            pasteurize_select = Select(self.driver.find_element_by_name('pasteurize'))
+            nanhandling_select = Select(self.driver.find_element_by_name('nanhandling'))
+            # backdays_hidden_value = self.driver.find_element_by_name('backdays')  # not visible selector, custom field
+            decay_input = self.driver.find_element_by_name('decay')
+            max_stock_weight_input = self.driver.find_element_by_name('optrunc')
+            sim_action_simulate = self.driver.find_element_by_class_name('sim-action-simulate')
+
+            escape = Actions(self.driver)
+            escape.send_keys(Keys.ESCAPE)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            input_form.click() # фокусируемся на поле ввода
+
+            input_action = Actions(self.driver)
+
+            l = len(alpha.text)
+            for idx in range(l):
+                input_action.send_keys(alpha.text[idx])
+                if idx != l-1:
+                    input_action.key_down(Keys.LEFT_SHIFT).send_keys(Keys.ENTER).key_up(Keys.LEFT_SHIFT)
+
+            input_action.perform()
+            input_form.click()
+            escape.perform()
+
+            go_to_top = Actions(self.driver)
+            go_to_top.click(body)
+            go_to_top.send_keys_to_element(body, Keys.CONTROL + Keys.HOME)
+
+            go_to_top.perform()
+
+            go_to_end = Actions(self.driver)
+            go_to_end.click(body)
+            go_to_end.send_keys_to_element(body, Keys.CONTROL + Keys.END)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            escape.perform()
+
+            self.driver.find_element_by_id("test-flowsexprCode").click()
+            escape.perform()
+            go_to_top.perform()
+
+            time.sleep(1)
+
+            settings_button.click()
+
+            time.sleep(1)
+
+            region_select.select_by_visible_text(alpha.region)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now())+'.png'))
+
+            universe_select.select_by_visible_text(alpha.universe)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            delay_select.select_by_visible_text(str(alpha.delay))
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            neutralization_select.select_by_visible_text(alpha.neutralization)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            pasteurize_select.select_by_visible_text(alpha.pasteurize)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            nanhandling_select.select_by_visible_text(alpha.nanhandling)
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            decay_input.clear()
+            decay_input.send_keys(str(alpha.decay))
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            max_stock_weight_input.clear()
+            max_stock_weight_input.send_keys(str(alpha.max_stock_weight))
+            """
+            # no lookback for fast expressions
+            self.driver.execute_script('''
+                var elem = arguments[0];
+                var value = arguments[1];
+                elem.value = value;
+            ''', backdays_hidden_value, "512") # old lookback_days option
+            """
+            settings_button.click()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            go_to_end.perform()
+
+            escape.perform()
+            time.sleep(1)
+
+            sim_action_simulate.click()
+            self.driver.implicitly_wait(300)
+
+            go_to_top.perform()
+
+            test_btn = self.driver.find_element_by_id('test-statsBtn')
+            test_btn.click()
+            self.driver.implicitly_wait(self.implicitly_wait)
+
+            go_to_top.perform()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            time.sleep(1)
+
+            classified = self.driver.find_element_by_id('percentileStats').find_element_by_class_name('panel-title').get_attribute('innerText').upper()
+            if classified:
+                alpha.stats['classified']=classified
+
+            corr_button = self.driver.find_element_by_id('alphaCorrChartButton')
+            action_get_corr = ActionChains(self.driver)
+            action_get_corr.click(corr_button)
+            action_get_corr.perform()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            go_to_end.perform()
+
+            corrs = dict()
+            corr_block = self.driver.find_element_by_class_name('highcharts-series')
+            corr_rects = corr_block.find_elements_by_tag_name('rect')
+            for rect_id, rect in enumerate(corr_rects):
+                elem_height = rect.get_attribute('height')
+                elem_width = rect.get_attribute('width')
+                if (int(elem_height) == 0) and (int(elem_width) == 0):
+                    continue
+                else:
+                    corrs[rect_id] = elem_height
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            go_to_top.perform()
+
+            left_corr_index = min(corrs.keys())
+            right_corr_index = max(corrs.keys())
+
+            left_corr_value = -1.0 + left_corr_index * 0.1
+            right_corr_value = -1.0 + right_corr_index * 0.1 + 0.1
+
+            alpha.stats['year_by_year'] = self._get_stats()
+            alpha.stats['left_corr'] = left_corr_value
+            alpha.stats['right_corr'] = right_corr_value
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            """
+            Структура столбцов корреляции
+            https://s.mail.ru/FAbH/GwQ3NS9VZ
+            """
+
+            # self.driver.find_elements_by_class_name('col-xs-4')[2].click() # так можно кликать тоже, обертка над кнопкой
+            self.driver.find_element_by_id('resultTabPanel').find_element_by_class_name(
+                'menu').find_elements_by_class_name('item')[3].click()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            # жмём check submission
+            self.driver.find_element_by_id('checkAlphaContainer').click()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+            go_to_top.perform()
+
+            submittable = alert_container.get_attribute('innerText')
+            submittable_flag = False
+            if 'success' in submittable.lower():
+                submittable_flag = True
+            else:
+                alert_message = submittable # raise message why it's not submittable
+
+            alpha.stats['submittable'] = submittable_flag
+            alpha.stats['submitted'] = False
+            alpha.simulated = True
+
+            go_to_top.perform()
+
+            if debug:
+                self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+        except NoSuchElementException as err:
+            print("Something went wrong...")
+            alert_message = alert_container.get_attribute('innerText').replace(' ', '')
+            if not alert_message:
+                if debug:
+                    self.driver.save_screenshot(
+                        os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+                if not self._error(err):
+                    print("Couldn't login again, it can be serious issue, stopping...")
+                    exit(str(err))
+
+        if debug:
+            self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(datetime.datetime.now()) + '.png'))
+
+        return alert_message
+
+    def submit_alpha(self, alpha):
+        """
+        Сабмитит альфу. Предполагается, что браузер уже находится на вкладке с кнопкой submit
+        :param alpha: объект класса Alpha. Только что просимулированная альфа
+        :return: True если альфа засабмитилась, False иначе.
+        Также выставляет флаг submitted в словаре stats
+        """
+        assert isinstance(alpha, basic.Alpha), 'alpha must be Alpha class instance'
+        if alpha.stats['submittable']:
+            self.driver.find_element_by_id('submitAlphaContainer').click()
+            submittable = self.driver.find_element_by_class_name('sim-alert-container').find_element_by_class_name('alert-1').find_element_by_class_name('content').text
+            if 'success' in submittable.lower():
+                alpha.stats['submitted'] = True
+            else:
+                alpha.stats['submitted'] = False
+            return alpha.stats['submitted']
+
+    def _error(self, error):
+        """
+        :param error: Объект ошибки
+        :return: Возвращает True, если элемент удалось дождаться и произошел успешный перелогин,
+        если перелогиниться не удалось, то возвращает False
+        """
+        if 'CodeMirror-line' in error.msg:
+            self.driver.get('https://www.worldquantvrc.com/simulate')
+            try:
+                element_present = EC.presence_of_element_located((By.CLASS_NAME, 'CodeMirror-line'))
+                WebDriverWait(self.driver, 120).until(element_present)
+                # WebDriverWait(self.driver, 120).until(element_present).click()
+                return True
+
+            except TimeoutException:
+                return self.login(relog=True)
+
+        if 'test-statsBtn' in error.msg:
+            try:
+                element_present = EC.presence_of_element_located((By.ID, 'test-statsBtn'))
+                WebDriverWait(self.driver, 180).until(element_present)
+                # WebDriverWait(self.driver, 180).until(element_present).click()
+                return True
+
+            except TimeoutException:
+                return self.login(relog=True)

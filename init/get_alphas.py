@@ -3,12 +3,11 @@ import argparse
 import datetime
 import json
 import re
-
-from selenium.webdriver.common.keys import Keys
-
-from stuff.helpers import bcolors
-from websim import WebSim, Alpha
 from time import sleep
+
+from shabilka.basic import Alpha
+from shabilka.helpers import bcolors
+from shabilka.websim import WebSim
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)

@@ -16,10 +16,13 @@
 import argparse
 from random import shuffle
 
-from stuff.helpers import read_components, read_recipes, BasicGrinder, bcolors, sendemail_via_gmail
-from websim import WebSim
 import pymysql
-import config
+
+from init import config
+from shabilka.basic import Alpha, Recipe, BasicGrinder
+from shabilka.helpers import bcolors, sendemail_via_gmail
+from shabilka.websim import WebSim
+
 
 if __name__=="__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -35,10 +38,12 @@ if __name__=="__main__":
     recipe_name = args.recipe_name
     begin_index = args.begin_index
     shuffle_flag = args.shuffle
-    alphas_arr = read_components(alphas_filepath)
+    alpha_reader = Alpha.return_reader()
+    recipe_reader = Recipe.return_reader()
+    alphas_arr = alpha_reader(alphas_filepath)
     if shuffle_flag:
         shuffle(alphas_arr)
-    recipes_arr = read_recipes(recipes_filepath)
+    recipes_arr = recipe_reader(recipes_filepath)
     recipe = None
     for elem in recipes_arr:
         if elem.id == recipe_name:

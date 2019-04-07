@@ -1,7 +1,7 @@
 # coding=utf-8
 import pymysql
 
-import src.config as conf
+from init import config as conf
 
 if __name__=='__main__':
     with pymysql.connect(conf.DB_HOST, conf.DB_USER, conf.DB_USER_PASSWORD, conf.DB_NAME) as cursor:

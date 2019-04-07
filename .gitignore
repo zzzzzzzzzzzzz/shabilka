@@ -168,5 +168,11 @@ env/
 .idea/
 phantomjs/
 logs/
-chromedriver
-local_config.py
+drivers/chromedriver
+init/local_config.py
+recipes/*
+!recipes/example.json
+!recipes/README.md
+alphas/*
+!alphas/example.json
+!alphas/README.md

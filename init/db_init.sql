@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS shabilka_db.recipes (
   template TEXT NOT NULL
 );
 
+INSERT INTO recipes (id, commutate, description, template) VALUES ("dummy", 1, "dummy template", "dummy");
+
 CREATE TABLE IF NOT EXISTS shabilka_db.alphas (
   id INTEGER PRIMARY KEY AUTO_INCREMENT,
   md5hash VARCHAR(255) UNIQUE,
