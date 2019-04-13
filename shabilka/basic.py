@@ -16,8 +16,10 @@ import pymysql
 from init.config import DB_USER, DB_HOST, DB_USER_PASSWORD, DB_NAME, LOGDIR
 import constants
 
-from shabilka import websim, helpers
+from shabilka import websim
 from shabilka.helpers import read_init, return_dict_combinations
+
+logger = websim.logger
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -88,7 +90,7 @@ class Recipe(object):
             except Exception as e:
                 raise e
         else:
-            print("This recipe is already in db: {id}".format(id=self.id))
+            logger.warning("This recipe is already in db: {id}".format(id=self.id))
             return True
 
     @classmethod
@@ -105,9 +107,9 @@ class Alpha(object):
                         'EUR': ['TOP1200', 'TOP800', 'TOP600', 'TOP400', 'TOP100'],
                         'ASI': ['TOP1500', 'TOP1000', 'TOP500', 'TOP150']}
 
-    REGIONS_DELAY = {'USA': ['1', '0'],
-                     'EUR': ['1', '0'],
-                     'ASI': ['1']}
+    REGIONS_DELAY = {'USA': [1, 0],
+                     'EUR': [1, 0],
+                     'ASI': [1]}
 
     NEUTRALIZATIONS = ['None', 'Market', 'Sector', 'Industry', 'Subindustry']
 
@@ -125,77 +127,132 @@ class Alpha(object):
         'year_by_year': []
     }
 
+    letters_multipliers = {
+        'K': 1e3,
+        'M': 1e6
+    }
+
     ASSOCIATED_DB_TABLE = 'alphas'
     ASSOCIATED_STATS_DB_TABLE = 'alphas_stats'
 
-    def __init__(self, region, universe, delay, decay, max_stock_weight, neutralization, pasteurize, nanhandling, text,
-                 components=[]):
-        assert isinstance(region, str), 'Region of the alpha must be simple string HUUUMAN'
-        assert isinstance(universe, str), 'Universe of the alpha must be simple string HUUUMAN'
+    DEFAULT_REGION = 'USA'
+    DEFAULT_REGIONS_UNIVERSE = {
+        'USA': 'TOP3000',
+        'EUR': 'TOP1200',
+        'ASI': 'TOP1500'
+    }
+    DEFAULT_REGIONS_DELAY = {
+        'USA': 1,
+        'EUR': 1,
+        'ASI': 1
+    }
+    DEFAULT_DECAY = 0
+    DEFAULT_MAX_STOCK_WEIGHT = 0.03
+    DEFAULT_NEUTRALIZATION = "Market"
+    DEFAULT_PASTEURIZE = 'On'
+    DEFAULT_NANHANDLING = 'On'
+
+    def __init__(self, text, components=(), **kwargs):
         assert isinstance(text, list), 'Text of the alpha must be list HUUUMAN'
-        assert isinstance(delay, int), 'Delay of the alpha must be simple integer HUUUMAN'
-        assert isinstance(decay, int), 'Delay of the alpha must be simple integer HUUUMAN'
-        assert isinstance(max_stock_weight, float) or isinstance(max_stock_weight,
-                                                                 int), 'Max stock weight of the alpha must be simple float or integer like 0 HUUUMAN'
-        assert isinstance(neutralization, str), 'Neutralization of the alpha must be simple string HUUUMAN'
-        assert isinstance(pasteurize, str), 'Pasteurize must be simple str HUUUMAN'
-        assert isinstance(nanhandling, str), 'Nanhandling must be simple str HUUUMAN'
         assert isinstance(components, list), 'Components must be list type HUUUMAN'
 
-        if region.upper() in Alpha.REGIONS_UNIVERSE:
-            self.region = region.upper()
+        # region init
+        if 'region' in kwargs:
+            region = kwargs['region']
+            if region.upper() in self.REGIONS_UNIVERSE:
+                self.region = region.upper()
+            else:
+                raise ValueError('Got unexpected region value: {}. Possible values are {}'.format(region.upper(), str(
+                    list(self.REGIONS_UNIVERSE.keys()))))
+        else:
+            self.region = self.DEFAULT_REGION
+
+        # universe init
+        if 'universe' in  kwargs:
+            universe = kwargs['universe']
             if universe.upper() in Alpha.REGIONS_UNIVERSE[self.region]:
                 self.universe = universe.upper()
             else:
                 raise ValueError("Got unexpected universe value: {}. Possible values for chosen region are {}".format(
                     universe.upper(), str(Alpha.REGIONS_UNIVERSE[self.region])))
         else:
-            raise ValueError('Got unexpected region value: {}. Possible values are {}'.format(region.upper(), str(
-                list(Alpha.REGIONS_UNIVERSE.keys()))))
+            self.universe = self.DEFAULT_REGIONS_UNIVERSE[self.region]
+
+        # delay init
+        if 'delay' in kwargs:
+            delay = int(kwargs['delay'])
+            if delay in self.REGIONS_DELAY[self.region]:
+                self.delay = delay
+            else:
+                raise ValueError("Got unexpected delay value: {}. Possible values are {}".format(delay, str(
+                    self.REGIONS_DELAY[self.region])))
+        else:
+            self.delay = self.DEFAULT_REGIONS_DELAY[self.region]
+
+        # decay init
+        if 'decay' in kwargs:
+            self.decay = int(kwargs['decay'])
+        else:
+            self.decay = self.DEFAULT_DECAY
+
+        # max stock weight init
+        if 'max_stock_weight' in kwargs:
+            max_stock_weight = float(kwargs['max_stock_weight'])
+            if max_stock_weight >= 0.0:
+                self.max_stock_weight = max_stock_weight
+            else:
+                raise ValueError(
+                    "Got unexpected max_stock_weight value: {}. Max stock value must be float greater or equal than "
+                    "zero".format(
+                        max_stock_weight))
+        else:
+            self.max_stock_weight = self.DEFAULT_MAX_STOCK_WEIGHT
+
+        # neutralization init
+        if 'neutralization' in kwargs:
+            neutralization = kwargs['neutralization'].capitalize()
+            neutralization = neutralization.capitalize()
+            if neutralization in self.NEUTRALIZATIONS:
+                self.neutralization = neutralization
+            else:
+                raise ValueError("Got unexpected neutralization value: {}. Possible values are {}".format(neutralization,
+                                                                                                      str(
+                                                                                                          self.NEUTRALIZATIONS)))
+        else:
+            self.neutralization = self.DEFAULT_NEUTRALIZATION
+
+        # pasteurize init
+        if 'pasteurize' in kwargs:
+            pasteurize = kwargs['pasteurize'].capitalize()
+            pasteurize = pasteurize.capitalize()
+            if pasteurize in self.PASTEURIZE:
+                self.pasteurize = pasteurize
+            else:
+                raise ValueError(
+                    "Got unexpected pasteurize value: {}. Possible values are {}".format(pasteurize, str(self.PASTEURIZE)))
+        else:
+            self.pasteurize = self.DEFAULT_PASTEURIZE
+
+        # nanhandling init
+        if 'nanhandling' in kwargs:
+            nanhandling = kwargs['nanhandling'].capitalize()
+            nanhandling = nanhandling.capitalize()
+            if nanhandling in self.NANHANDLING:
+                self.nanhandling = nanhandling
+            else:
+                raise ValueError("Got unexpected nanhandling value: {}. Possible values are {}".format(nanhandling, str(
+                    self.NANHANDLING)))
+        else:
+            self.nanhandling = self.DEFAULT_NANHANDLING
+
+        # text init
         new_text = []
         for elem in text:
             new_text.append(elem.lower())
         self.text = new_text
-        if str(delay) in Alpha.REGIONS_DELAY[self.region]:
-            self.delay = delay
-        else:
-            raise ValueError("Got unexpected delay value: {}. Possible values are {}".format(delay, str(
-                Alpha.REGIONS_DELAY[self.region])))
-        self.decay = decay
-        if max_stock_weight >= 0.0:
-            self.max_stock_weight = max_stock_weight
-        else:
-            raise ValueError(
-                "Got unexpected max_stock_weight value: {}. Max stock value must be greater or equal than zero".format(
-                    max_stock_weight))
-
-        neutralization = neutralization.capitalize()
-        if neutralization in Alpha.NEUTRALIZATIONS:
-            self.neutralization = neutralization
-        else:
-            raise ValueError("Got unexpected neutralization value: {}. Possible values are {}".format(neutralization,
-                                                                                                      str(
-                                                                                                          Alpha.NEUTRALIZATIONS)))
-
-        pasteurize = pasteurize.capitalize()
-        if pasteurize in Alpha.PASTEURIZE:
-            self.pasteurize = pasteurize
-        else:
-            raise ValueError(
-                "Got unexpected pasteurize value: {}. Possible values are {}".format(pasteurize, str(Alpha.PASTEURIZE)))
-
-        nanhandling = nanhandling.capitalize()
-        if nanhandling in Alpha.NANHANDLING:
-            self.nanhandling = nanhandling
-        else:
-            raise ValueError("Got unexpected nanhandling value: {}. Possible values are {}".format(nanhandling, str(
-                Alpha.NANHANDLING)))
 
         self.simulated = False
-        if components:
-            self.components = components
-        else:
-            self.components = []
+        self.components = components
 
         if not self._check_correctness():
             raise ValueError("This alpha is not valid for such universe, region, delay options")
@@ -311,7 +368,7 @@ class Alpha(object):
                                    components=json.dumps(self.components),
                                    skeleton=pymysql.escape_string(self.to_json_str())
                                    )
-                    print(query)
+
                     if self.stats['submitted']:
                         query = \
                             """
@@ -341,41 +398,39 @@ class Alpha(object):
                         alpha_id = d[0]
                     else:
                         raise Exception("Couldn't find inserted alpha")
-
+                    numbers_regexp = re.compile('[\d\.]+')
                     for stat in self.stats['year_by_year']:
+                        pnl_multiplier = 1.0
                         pnl = stat.get('pnl', '0.0K')
-                        print(pnl) # float object is not subscriptable?
-                        if pnl[-1] == 'K':
-                            pnl = float(pnl[:-1])*1e3
-                        if pnl[-1] == 'M':
-                            pnl = float(pnl[:-1])*1e6
+                        if pnl[-1] in self.letters_multipliers:
+                            pnl_multiplier = self.letters_multipliers[pnl[-1]]
                         query = \
                             """
                         INSERT INTO {table} (alpha_id, year, fitness, returns, sharpe, long_count, short_count, margin, turn_over, draw_down, booksize, pnl, left_corr, right_corr)
                         VALUES ({alpha_id}, '{year}', {fitness}, {returns}, {sharpe}, {long_count}, {short_count}, {margin}, {turn_over}, {draw_down}, {booksize}, {pnl}, {left_corr}, {right_corr})
                         """.format(table=Alpha.ASSOCIATED_STATS_DB_TABLE,
                                    alpha_id=alpha_id,
-                                   year=stat.get('year', '0000'),
+                                   year=numbers_regexp.findall(stat.get('year', '0000'))[0],
                                    fitness=stat.get('fitness', 0),
-                                   returns=stat.get('returns', '0.00%')[:-1],
+                                   returns=numbers_regexp.findall(stat.get('returns', '0.00%'))[0],
                                    sharpe=stat.get('sharpe', 0.0),
                                    long_count=stat.get('long_count', 0),
                                    short_count=stat.get('short_count', 0),
-                                   margin=stat.get('margin', '999.9bpm')[:-3],
-                                   turn_over=stat.get('turn_over', '0.00%')[:-1],
-                                   draw_down=stat.get('draw_down', '0.00%')[:-1],
-                                   booksize=stat.get('booksize', '20.0M')[:-1],
-                                   pnl=pnl,
-                                   left_corr=math.ceil(self.stats.get('left_corr', 0.0)),
-                                   right_corr=math.floor(self.stats.get('right_corr', 0.0)))
+                                   margin=numbers_regexp.findall(stat.get('margin', '999.9bpm'))[0],
+                                   turn_over=numbers_regexp.findall(stat.get('turn_over', '0.00%'))[0],
+                                   draw_down=numbers_regexp.findall(stat.get('draw_down', '0.00%'))[0],
+                                   booksize=numbers_regexp.findall(stat.get('booksize', '20.0M'))[0],
+                                   pnl=float(numbers_regexp.findall(pnl)[0])*pnl_multiplier,
+                                   left_corr=math.ceil(float(self.stats.get('left_corr', 0.0))),
+                                   right_corr=math.floor(float(self.stats.get('right_corr', 0.0))))
                         cursor.execute(query)
                     return True
                 except Exception as e:
                     raise e
             else:
-                print("This alpha is already in db")
+                logger.warning("This alpha is already in db")
                 if self.stats['submitted']:
-                    print("Now it's submitted, updating field, submitted_time")
+                    logger.info("Now it's submitted, updating field, submitted_time")
                     try:
                         query = \
                             """
@@ -491,7 +546,7 @@ class Alpha(object):
                     )
                 cursor.execute(query)
                 if not cursor.fetchone():
-                    print("found incompaitable with {} {} {} special word '{}'".format(self.universe.lower(),
+                    logger.error("found incompaitable with {} {} {} special word '{}'".format(self.universe.lower(),
                                                                                        self.region.lower(), self.delay,
                                                                                        word))
                     return False
@@ -639,7 +694,7 @@ class Alpha(object):
                     try:
                         with connection.cursor() as cursor:
                             if alpha.check_db_existance(cursor):
-                                print("Alpha is already in db, skipping. Hash {}".format(alpha.hash))
+                                logger.error("Alpha is already in db, skipping. Hash {}".format(alpha.hash))
                                 continue
                         connection.commit()
                     finally:
@@ -647,10 +702,8 @@ class Alpha(object):
                     try:
                         mes = None
                         mes = wbsm.simulate_alpha(alpha, debug=debug)
-                        if debug:
-                            print("Alpha simulated flag is {}".format(alpha.simulated))
-                            print("Alpha hash {}".format(alpha.hash))
-                            print("")
+                        logger.debug("Alpha simulated flag is {}".format(alpha.simulated))
+                        logger.debug("Alpha hash {}".format(alpha.hash))
                         if alpha.simulated:
                             alpha.stats['submitted'] = 1
                             connection = pymysql.connect(DB_HOST, DB_USER, DB_USER_PASSWORD, DB_NAME)
@@ -662,21 +715,20 @@ class Alpha(object):
                             finally:
                                 connection.close()
                         else:
-                            print("Websim said: {}".format(mes))
+                            logger.info("Websim said: {}".format(mes))
                             resimulate_list.append(alpha.return_params())
                             if mes:
                                 websim_messages_list.append(mes)
                     except Exception as e:
-                        print("Caught an exception")
-                        print(str(e))
-                        print("Will add this alpha to resimulate list")
-                        print("Websim said: {}".format(mes))
+                        logger.error("Caught an exception")
+                        logger.error(str(e))
+                        logger.info("Will add this alpha to resimulate list")
+                        logger.info("Websim said: {}".format(mes))
                         resimulate_list.append(alpha.return_params())
                         if mes:
                             websim_messages_list.append(mes)
         finally:
-            if debug:
-                print(resimulate_list)
+            logger.debug(resimulate_list)
             with open(os.path.join(folder, "resimulate.json"), "w") as f:
                 json.dump(obj=resimulate_list, fp=f)
 
@@ -700,10 +752,10 @@ class BasicGrinder(object):
         self._robin = None
         self.variables_number = len(self.recipe.variables)
         self.begin_index = begin_index
-        print("Got {} alphas".format(len(self.alphas)))
-        print("Gor recipe {}".format(self.recipe.id))
-        print("Number of variables {}".format(self.variables_number))
-        print("Begin index is {}".format(begin_index))
+        logger.info("Got {} alphas".format(len(self.alphas)))
+        logger.info("Gor recipe {}".format(self.recipe.id))
+        logger.info("Number of variables {}".format(self.variables_number))
+        logger.info("Begin index is {}".format(begin_index))
 
     def __iter__(self):
         if not self.recipe.commutate:
@@ -754,7 +806,7 @@ class BasicGrinder(object):
             if new_row:
                 res += [new_row]
         self._res = res
-        print(params)
+        logger.info(params)
         self._params = return_dict_combinations(params).__iter__()
 
     def _next(self):
@@ -762,20 +814,20 @@ class BasicGrinder(object):
             new_alpha = Alpha(**self._get_next_params())
             return new_alpha
         except StopIteration:
-            print("BasicGrinder: beginning to work with new permutation")
+            logger.info("BasicGrinder: beginning to work with new permutation")
             try:
                 self._rearm_permutations()
                 return self._next()
             except StopIteration as e:
-                print("Permutations ended, stopping")
+                logger.info("Permutations ended, stopping")
                 raise e
         except ValueError as e:
-            print("Incompaitable parameters")
-            print(str(e))
-            print("Skipping this alpha")
+            logger.error("Incompaitable parameters")
+            logger.error(str(e))
+            logger.info("Skipping this alpha")
             return self._next()
         except Exception as e:
-            print("Caught an exception during iteration. Stopping and writing the last index")
+            logger.warning("Caught an exception during iteration. Stopping and writing the last index")
             with open(os.path.join(LOGDIR, self.__class__.__name__ + '_stopped_on.log'), 'w') as f:
                 f.write(str(self._idx))
             raise e
