@@ -152,8 +152,7 @@ class Alpha(object):
     DEFAULT_PASTEURIZE = 'On'
     DEFAULT_NANHANDLING = 'On'
 
-    def __init__(self, text, components=(), **kwargs):
-        assert isinstance(text, list), 'Text of the alpha must be list HUUUMAN'
+    def __init__(self, components=(), **kwargs):
         assert isinstance(components, list), 'Components must be list type HUUUMAN'
 
         # region init
@@ -170,11 +169,11 @@ class Alpha(object):
         # universe init
         if 'universe' in  kwargs:
             universe = kwargs['universe']
-            if universe.upper() in Alpha.REGIONS_UNIVERSE[self.region]:
+            if universe.upper() in self.REGIONS_UNIVERSE[self.region]:
                 self.universe = universe.upper()
             else:
                 raise ValueError("Got unexpected universe value: {}. Possible values for chosen region are {}".format(
-                    universe.upper(), str(Alpha.REGIONS_UNIVERSE[self.region])))
+                    universe.upper(), str(self.REGIONS_UNIVERSE[self.region])))
         else:
             self.universe = self.DEFAULT_REGIONS_UNIVERSE[self.region]
 
@@ -246,10 +245,15 @@ class Alpha(object):
             self.nanhandling = self.DEFAULT_NANHANDLING
 
         # text init
-        new_text = []
-        for elem in text:
-            new_text.append(elem.lower())
-        self.text = new_text
+        if 'text' in kwargs['text']:
+            text = kwargs['text']
+            assert isinstance(text, list), 'Text of the alpha must be list'
+            new_text = []
+            for elem in text:
+                new_text.append(elem.lower())
+            self.text = new_text
+        else:
+            raise AttributeError("text parameter is required!")
 
         self.simulated = False
         self.components = components
@@ -358,7 +362,7 @@ class Alpha(object):
                         """
                         INSERT INTO {table} (md5hash, author, submittable, submitted, classified, recipe_id, components, skeleton) 
                         VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{classified}', '{recipe_id}', '{components}', '{skeleton}')
-                        """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                        """.format(table=self.ASSOCIATED_DB_TABLE,
                                    md5hash=self.hash,
                                    author=DB_USER,
                                    submittable=self.stats['submittable'],
@@ -374,7 +378,7 @@ class Alpha(object):
                             """
                             INSERT INTO {table} (md5hash, author, submittable, submitted, classified, submitted_time, recipe_id, components, skeleton) 
                             VALUES ('{md5hash}', '{author}', {submittable}, {submitted}, '{classified}', '{submitted_time}', '{recipe_id}', '{components}', '{skeleton}')
-                            """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                            """.format(table=self.ASSOCIATED_DB_TABLE,
                                        md5hash=self.hash,
                                        author=DB_USER,
                                        submittable=self.stats['submittable'],
@@ -390,7 +394,7 @@ class Alpha(object):
                     query = \
                         """
                     SELECT id FROM {table} WHERE md5hash='{md5hash}'
-                    """.format(table=Alpha.ASSOCIATED_DB_TABLE, md5hash=self.hash)
+                    """.format(table=self.ASSOCIATED_DB_TABLE, md5hash=self.hash)
                     cursor.execute(query)
                     d = cursor.fetchone()
                     alpha_id = None
@@ -408,7 +412,7 @@ class Alpha(object):
                             """
                         INSERT INTO {table} (alpha_id, year, fitness, returns, sharpe, long_count, short_count, margin, turn_over, draw_down, booksize, pnl, left_corr, right_corr)
                         VALUES ({alpha_id}, '{year}', {fitness}, {returns}, {sharpe}, {long_count}, {short_count}, {margin}, {turn_over}, {draw_down}, {booksize}, {pnl}, {left_corr}, {right_corr})
-                        """.format(table=Alpha.ASSOCIATED_STATS_DB_TABLE,
+                        """.format(table=self.ASSOCIATED_STATS_DB_TABLE,
                                    alpha_id=alpha_id,
                                    year=numbers_regexp.findall(stat.get('year', '0000'))[0],
                                    fitness=stat.get('fitness', 0),
@@ -437,7 +441,7 @@ class Alpha(object):
                         UPDATE {table}
                         SET submitted_time='{submitted_time}'
                         WHERE md5hash='{md5hash}'
-                        """.format(table=Alpha.ASSOCIATED_DB_TABLE,
+                        """.format(table=self.ASSOCIATED_DB_TABLE,
                                    submitted_time=datetime.datetime.now(),
                                    md5hash=self.hash)
                         cursor.execute(query)
@@ -676,7 +680,7 @@ class Alpha(object):
         return read_init(cls)
 
     @classmethod
-    def load_to_db_from_file(cls, filepath, debug=False):
+    def load_to_db_from_file(cls, filepath, wbsm, debug=False):
         resimulate_list = []
         websim_messages_list = []
         folder = os.path.join(LOGDIR, 'alpha_load_to_db_from_file/')
@@ -684,7 +688,6 @@ class Alpha(object):
             os.makedirs(folder)
         except Exception:
             pass
-        wbsm = websim.WebSim()
         try:
             if wbsm.login(relog=True):
                 reader = cls.return_reader()
@@ -734,6 +737,45 @@ class Alpha(object):
 
             with open(os.path.join(folder, "websim_messages.json"), "w") as f:
                 json.dump(obj=websim_messages_list, fp=f)
+
+    @classmethod
+    def get_bunch_of_submitted_alphas(cls, bunch_size=10, additional_filtering=""):
+        """
+        Берёт случайное подмножество альф из базы
+        :param bunch_size: сколько альф взять из базы
+        :param additional_filtering: дополнительная фильтрация, ожидается корректный sql код типа "AND ..."
+        :return: список проинизиализированных объектов альф из базы
+        """
+        result = []
+        connection = pymysql.connect(DB_HOST, DB_USER, DB_USER_PASSWORD, DB_NAME)
+        try:
+            with connection.cursor() as cursor:
+                query = \
+                """
+                SELECT 
+                  components,
+                  skeleton 
+                FROM
+                  {table}
+                WHERE
+                  submitted=TRUE 
+                  {additional_filtering}
+                ORDER BY RAND()
+                LIMIT {bunch_size}
+                """.format(
+                    table=cls.ASSOCIATED_DB_TABLE,
+                    bunch_size=bunch_size,
+                    additional_filtering=""
+                )
+            for elem in cursor.fetchall():
+                result.append(cls(
+                    components=json.loads(elem[0]),
+                    **json.loads(elem[1])
+                ))
+            connection.commit()
+            return result
+        finally:
+            connection.close()
 
 
 class BasicGrinder(object):

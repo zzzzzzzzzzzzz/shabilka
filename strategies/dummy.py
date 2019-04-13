@@ -26,21 +26,19 @@ from shabilka.websim import WebSim
 
 if __name__=="__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    p.add_argument('--input', '-i', type=str, help='path to file with alphas', required=True)
     p.add_argument('--recipes', '-r', type=str, help='path to file with recipies', required=True)
     p.add_argument('--recipe_name', '-rn', type=str, help='id (name) of the recipe', required=True)
     p.add_argument('--shuffle', '-s', type=bool, default=False, help='shuffle alphas array or not', required=True)
     p.add_argument('--begin_index', '-bi', type=int, default=0, help='index of alpha to start with for BasicGrinder', required=False)
     args = p.parse_args()
 
-    alphas_filepath = args.input
     recipes_filepath = args.recipes
     recipe_name = args.recipe_name
     begin_index = args.begin_index
     shuffle_flag = args.shuffle
     alpha_reader = Alpha.return_reader()
     recipe_reader = Recipe.return_reader()
-    alphas_arr = alpha_reader(alphas_filepath)
+    alphas_arr = Alpha.get_bunch_of_submitted_alphas()
     if shuffle_flag:
         shuffle(alphas_arr)
     recipes_arr = recipe_reader(recipes_filepath)
