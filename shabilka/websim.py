@@ -67,10 +67,12 @@ class WebSim(object):
         :return: True в случае успешного логина, False иначе
         """
         try:
+            logger.debug("trying to log in")
             if relog:
                 self.driver.get(self.SIMULATE_PAGE)
 
             self.driver.get(self.LOGIN_PAGE)
+            logger.debug("opened login page")
             try:
                 self.driver.implicitly_wait(10)
                 self.driver.find_element_by_class_name('cookie-consent-accept').click()
@@ -82,6 +84,7 @@ class WebSim(object):
             log_pass[1].clear(), log_pass[1].send_keys(PASSWORD)
             log_pass[1].send_keys(Keys.RETURN)
 
+            logger.debug("sent keys to login form")
             self.login_time = time.time()
             time.sleep(10)
             logger.info("Login successuful")
@@ -128,6 +131,7 @@ class WebSim(object):
         """
         assert isinstance(alpha, basic.Alpha), 'alpha must be Alpha class instance'
 
+        logger.debug("starting simulation")
         saveshot = lambda seed: self.driver.save_screenshot(os.path.join(self.simulate_logdir, str(seed) + '.png'))
 
         alert_message = None
@@ -171,6 +175,7 @@ class WebSim(object):
             # убираем автодополнение
             self.driver.execute_script("$(\"head\").append(\"<style>.CodeMirror-hints { display:None }</style>\")")
 
+            logger.debug("removed code mirror")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -193,6 +198,7 @@ class WebSim(object):
             # текст альфы может быть большим, надо промотать наверх
             go_to_top.perform()
 
+            logger.debug("pasted text")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -206,37 +212,44 @@ class WebSim(object):
             # по очереди выставляем все нужные нам опции
             region_select.select_by_visible_text(alpha.region)
 
+            logger.debug("selected region")
             if debug:
                 saveshot(datetime.datetime.now())
 
             universe_select.select_by_visible_text(alpha.universe)
 
+            logger.debug("selected universe")
             if debug:
                 saveshot(datetime.datetime.now())
 
             delay_select.select_by_visible_text(str(alpha.delay))
 
+            logger.debug("selected delay")
             if debug:
                 saveshot(datetime.datetime.now())
 
             neutralization_select.select_by_visible_text(alpha.neutralization)
 
+            logger.debug("selected neutralization")
             if debug:
                 saveshot(datetime.datetime.now())
 
             pasteurize_select.select_by_visible_text(alpha.pasteurize)
 
+            logger.debug("selected pasteurize")
             if debug:
                 saveshot(datetime.datetime.now())
 
             nanhandling_select.select_by_visible_text(alpha.nanhandling)
 
+            logger.debug("selected nanhandling")
             if debug:
                 saveshot(datetime.datetime.now())
 
             decay_input.clear()
             decay_input.send_keys(str(alpha.decay))
 
+            logger.debug("inserted decay")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -246,6 +259,7 @@ class WebSim(object):
             # закрываем окно настроек, здесь уже можно не ждать пока оно закроется
             settings_button.click()
 
+            logger.debug("inserted max stock weight and closed settings")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -255,6 +269,7 @@ class WebSim(object):
             # запускаем симуляцию, и выставляем время ожидания побольше
             sim_action_simulate.click()
             self.driver.implicitly_wait(self.implicitly_wait*3)
+            logger.debug("pressed simulate")
 
             # двигаемся наверх
             go_to_top.perform()
@@ -273,9 +288,12 @@ class WebSim(object):
             metadata_btn = tab_elements[2]
             submission_page = tab_elements[3]
 
+            logger.debug("going to click statistics")
             # переходим на вкладку статистики
             test_stats_btn.click()
             self.driver.implicitly_wait(self.implicitly_wait)
+
+            logger.debug("clicked stats")
 
             # и опять, на всякий случай
             go_to_top.perform()
@@ -296,6 +314,7 @@ class WebSim(object):
             action_get_corr.click(corr_button)
             action_get_corr.perform()
 
+            logger.debug("clicked correlation")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -312,6 +331,7 @@ class WebSim(object):
                 else:
                     corrs[rect_id] = elem_height
 
+            logger.debug("parsed correlation")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -323,17 +343,22 @@ class WebSim(object):
             left_corr_value = -1.0 + left_corr_index * 0.1
             right_corr_value = -1.0 + right_corr_index * 0.1 + 0.1
 
+            logger.debug("got correlations")
             # парсим статы
             alpha.stats['year_by_year'] = self._get_stats()
             alpha.stats['left_corr'] = left_corr_value
             alpha.stats['right_corr'] = right_corr_value
 
+            logger.debug("parsed stats")
+
             if save_chart:
+                logger.debug("saving chart")
                 # сохраняем графичек
                 chart_btn.click()
                 # ждём прогрузки графика
                 time.sleep(3)
                 saveshot(alpha.hash)
+                logger.debug("saved chart")
 
             if debug:
                 saveshot(datetime.datetime.now())
@@ -344,6 +369,7 @@ class WebSim(object):
             """
 
             submission_page.click()
+            logger.debug("clicked on submission page")
 
             if debug:
                 saveshot(datetime.datetime.now())
@@ -352,6 +378,7 @@ class WebSim(object):
             # жмём check submission
             check_submission_btn.click()
 
+            logger.debug("clicked check submission")
             if debug:
                 saveshot(datetime.datetime.now())
 
@@ -367,9 +394,11 @@ class WebSim(object):
             alpha.stats['submittable'] = submittable_flag
             alpha.stats['submitted'] = False
             alpha.simulated = True
+            logger.debug("parsed if submittable")
 
             go_to_top.perform()
 
+            logger.debug("ended simulation")
             if debug:
                 saveshot(datetime.datetime.now())
 
