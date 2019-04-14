@@ -84,8 +84,10 @@ if __name__=="__main__":
                         print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
 
                     print("Websim said: {}".format(mes))
+                    print("Link to simulation {}".format(websim.driver.current_url))
+                    print("")
 
-                    if (new_alpha.stats['classified'] != 'INFERIOR') and float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.1:
+                    if (new_alpha.stats['classified'] != 'INFERIOR') or float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3:
                         sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
 
                     """

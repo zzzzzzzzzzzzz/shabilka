@@ -30,9 +30,9 @@ class WebSim(object):
     """
     Базовый класс вебсим, через него взаимодействуем с сайтом wq
     """
-    BASIC_URL = "https://websimoriginal.worldquantvrc.com/"
-    SIMULATE_PAGE = "https://websimoriginal.worldquantvrc.com/simulate"
-    LOGIN_PAGE = "https://websimoriginal.worldquantvrc.com/login"
+    BASIC_URL = "https://worldquantvrc.com/"
+    SIMULATE_PAGE = "https://worldquantvrc.com/simulate"
+    LOGIN_PAGE = "https://worldquantvrc.com/login"
 
     def __init__(self, implicitly_wait=120):
         options = webdriver.ChromeOptions()
@@ -154,12 +154,6 @@ class WebSim(object):
         max_stock_weight_input = self.driver.find_element_by_name('optrunc')
         sim_action_simulate = self.driver.find_element_by_class_name('sim-action-simulate')
         alert_container = self.driver.find_element_by_class_name('sim-alert-container')
-        resultTabPanel = self.driver.find_element_by_id('resultTabPanel')
-        chart_btn = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')[0]
-        test_stats_btn = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')[1]
-        metadata_btn = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')[2]
-        submission_btn = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')[3]
-        check_submission_btn = self.driver.find_element_by_id('checkAlphaContainer')
 
         # и часто используемые действия
         go_to_top = Actions(self.driver)
@@ -265,6 +259,20 @@ class WebSim(object):
             # двигаемся наверх
             go_to_top.perform()
 
+            # объявляем элементы, связанные со статами
+            resultTabPanel = self.driver.find_element_by_id('resultTabPanel')
+
+            tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
+            while len(tab_elements) < 4:
+                # ждём пока все плашки прогрузятся, чертова анимация
+                time.sleep(1)
+                tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
+
+            chart_btn = tab_elements[0]
+            test_stats_btn = resultTabPanel.find_element_by_id('test-statsBtn')
+            metadata_btn = tab_elements[2]
+            submission_page = tab_elements[3]
+
             # переходим на вкладку статистики
             test_stats_btn.click()
             self.driver.implicitly_wait(self.implicitly_wait)
@@ -335,11 +343,12 @@ class WebSim(object):
             https://s.mail.ru/FAbH/GwQ3NS9VZ
             """
 
-            submission_btn.click()
+            submission_page.click()
 
             if debug:
                 saveshot(datetime.datetime.now())
 
+            check_submission_btn = self.driver.find_element_by_id('checkAlphaContainer')
             # жмём check submission
             check_submission_btn.click()
 

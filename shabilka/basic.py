@@ -245,7 +245,7 @@ class Alpha(object):
             self.nanhandling = self.DEFAULT_NANHANDLING
 
         # text init
-        if 'text' in kwargs['text']:
+        if 'text' in kwargs:
             text = kwargs['text']
             assert isinstance(text, list), 'Text of the alpha must be list'
             new_text = []
@@ -751,27 +751,29 @@ class Alpha(object):
         try:
             with connection.cursor() as cursor:
                 query = \
-                """
-                SELECT 
-                  components,
-                  skeleton 
-                FROM
-                  {table}
-                WHERE
-                  submitted=TRUE 
-                  {additional_filtering}
-                ORDER BY RAND()
-                LIMIT {bunch_size}
-                """.format(
-                    table=cls.ASSOCIATED_DB_TABLE,
-                    bunch_size=bunch_size,
-                    additional_filtering=""
-                )
-            for elem in cursor.fetchall():
-                result.append(cls(
-                    components=json.loads(elem[0]),
-                    **json.loads(elem[1])
-                ))
+                    """
+                    SELECT 
+                      components,
+                      skeleton 
+                    FROM
+                      {table}
+                    WHERE
+                      submitted=TRUE 
+                      {additional_filtering}
+                    ORDER BY RAND()
+                    LIMIT {bunch_size}
+                    """.format(
+                        table=cls.ASSOCIATED_DB_TABLE,
+                        bunch_size=bunch_size,
+                        additional_filtering=""
+                    )
+
+                cursor.execute(query)
+                for elem in cursor.fetchall():
+                    result.append(cls(
+                        components=json.loads(elem[0]),
+                        **json.loads(elem[1])
+                    ))
             connection.commit()
             return result
         finally:
@@ -832,7 +834,7 @@ class BasicGrinder(object):
         }
         self._current_components = []
         for idx, alpha in enumerate(alphas_permutation):
-            obfuscated = alpha.obfuscate_text(self.recipe.variables[idx], 'xxx')
+            obfuscated = alpha.obfuscate_text('_'+str(idx))
             self._current_components.append(alpha.hash)
             new_vars.append("var{}".format(idx))
             obfuscated[-1] = obfuscated[-1].replace(';', '')
