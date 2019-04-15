@@ -268,20 +268,29 @@ class WebSim(object):
 
             # запускаем симуляцию, и выставляем время ожидания побольше
             sim_action_simulate.click()
-            self.driver.implicitly_wait(self.implicitly_wait*3)
+            self.driver.implicitly_wait(self.implicitly_wait*5)
             logger.debug("pressed simulate")
 
             # двигаемся наверх
             go_to_top.perform()
 
             # объявляем элементы, связанные со статами
+            element_present = EC.presence_of_element_located((By.ID, 'resultTabPanel'))
+            WebDriverWait(self.driver, self.implicitly_wait*5).until(element_present)
             resultTabPanel = self.driver.find_element_by_id('resultTabPanel')
+
+            logger.debug("got result tab panel tag")
+            time.sleep(1) # анимация...
+            if debug:
+                saveshot(datetime.datetime.now())
 
             tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
             while len(tab_elements) < 4:
                 # ждём пока все плашки прогрузятся, чертова анимация
                 time.sleep(1)
                 tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
+
+            logger.debug("tab panel elements loaded")
 
             chart_btn = tab_elements[0]
             test_stats_btn = resultTabPanel.find_element_by_id('test-statsBtn')
@@ -402,8 +411,9 @@ class WebSim(object):
             if debug:
                 saveshot(datetime.datetime.now())
 
-        except NoSuchElementException as err:
+        except Exception as err:
             logger.error("Something went wrong...")
+            alert_container = self.driver.find_element_by_class_name('sim-alert-container')
             alert_message = alert_container.get_attribute('innerText')
             if not alert_message:
                 if debug:
@@ -411,6 +421,8 @@ class WebSim(object):
                 if not self._error(err):
                     logger.error("Couldn't login again, it can be serious issue, stopping...")
                     exit(-1)
+            else:
+                logger.error("Websim said: {}".format(alert_message))
 
         if debug:
             saveshot(datetime.datetime.now())

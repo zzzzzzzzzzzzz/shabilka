@@ -72,22 +72,22 @@ if __name__=="__main__":
                         print("Resulting stats")
                         print(new_alpha.stats['year_by_year'][-1])
                         print(new_alpha.stats['classified'])
+                        with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD,
+                                             config.DB_NAME) as cursor:
+                            new_alpha.to_db(cursor, recipe)
+
+                        if new_alpha.stats['submittable']:
+                            print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable" + bcolors.ENDC)
+                        else:
+                            print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
                     else:
                         print(bcolors.BOLD + bcolors.FAIL + "Alpha is NOT simulated correctly" + bcolors.ENDC)
-
-                    with pymysql.connect(config.DB_HOST, config.DB_USER, config.DB_USER_PASSWORD, config.DB_NAME) as cursor:
-                        new_alpha.to_db(cursor, recipe)
-
-                    if new_alpha.stats['submittable']:
-                        print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable" + bcolors.ENDC)
-                    else:
-                        print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
 
                     print("Websim said: {}".format(mes))
                     print("Link to simulation {}".format(websim.driver.current_url))
                     print("")
 
-                    if (new_alpha.stats['classified'] != 'INFERIOR') or float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3:
+                    if (new_alpha.stats['classified'] != 'INFERIOR') or (float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3 and float(new_alpha.stats['year_by_year'][-1]['turnover'][:-1]) <= 71.0):
                         sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
 
                     """
