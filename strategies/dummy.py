@@ -87,7 +87,7 @@ if __name__=="__main__":
                     print("Link to simulation {}".format(websim.driver.current_url))
                     print("")
 
-                    if (new_alpha.stats['classified'] != 'INFERIOR') or (float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3 and float(new_alpha.stats['year_by_year'][-1]['turnover'][:-1]) <= 71.0):
+                    if (new_alpha.stats['classified'] != 'INFERIOR') or (float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3 and float(new_alpha.stats['year_by_year'][-1]['turnover'][:-1]) <= 71.0 and (new_alpha.stats['right_corr'] < 0.81 and new_alpha.stats['left_corr'] > -0.81)):
                         sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
 
                     """
