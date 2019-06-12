@@ -12,7 +12,6 @@
                                                                         Gospel of Kulish, 6:19-21
 """
 
-
 import argparse
 from random import shuffle
 
@@ -23,19 +22,22 @@ from shabilka.basic import Alpha, Recipe, BasicGrinder
 from shabilka.helpers import bcolors, sendemail_via_gmail
 from shabilka.websim import WebSim
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument('--recipes', '-r', type=str, help='path to file with recipies', required=True)
     p.add_argument('--recipe_name', '-rn', type=str, help='id (name) of the recipe', required=True)
     p.add_argument('--shuffle', '-s', type=bool, default=False, help='shuffle alphas array or not', required=True)
-    p.add_argument('--begin_index', '-bi', type=int, default=0, help='index of alpha to start with for BasicGrinder', required=False)
+    p.add_argument('--tags', '-t', nargs='+', default=[], help='meta tags to set to all simulated alphas',
+                   required=False)
+    p.add_argument('--begin_index', '-bi', type=int, default=0, help='index of alpha to start with for BasicGrinder',
+                   required=False)
     args = p.parse_args()
 
     recipes_filepath = args.recipes
     recipe_name = args.recipe_name
     begin_index = args.begin_index
     shuffle_flag = args.shuffle
+    tags = args.tags
     alpha_reader = Alpha.return_reader()
     recipe_reader = Recipe.return_reader()
     alphas_arr = Alpha.get_bunch_of_submitted_alphas()
@@ -61,9 +63,11 @@ if __name__=="__main__":
         while 1:
             try:
                 for new_alpha in BasicGrinder(recipe, alphas_arr, begin_index=begin_index):
+                    tags_to_set = tags
                     print(bcolors.BOLD + bcolors.HEADER + "Going to simulate alpha:" + bcolors.ENDC)
                     print(new_alpha)
-                    mes = websim.simulate_alpha(new_alpha, debug=True) # есть debug=True, который сохраняет скрины, помогают понять что произошло
+                    mes = websim.simulate_alpha(new_alpha,
+                                                debug=True)  # есть debug=True, который сохраняет скрины, помогают понять что произошло
 
                     if new_alpha.simulated:
                         print(bcolors.BOLD + bcolors.OKGREEN + "Alpha successfully simulated" + bcolors.ENDC)
@@ -78,6 +82,8 @@ if __name__=="__main__":
 
                         if new_alpha.stats['submittable']:
                             print(bcolors.BOLD + bcolors.OKGREEN + "Alpha is submittable" + bcolors.ENDC)
+                            tags_to_set += ['submittable']
+                            websim.submit_alpha(new_alpha)
                         else:
                             print(bcolors.BOLD + bcolors.FAIL + "Alpha is not submittable" + bcolors.ENDC)
                     else:
@@ -87,9 +93,24 @@ if __name__=="__main__":
                     print("Link to simulation {}".format(websim.driver.current_url))
                     print("")
 
-                    if (new_alpha.stats['classified'] != 'INFERIOR') or (float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3 and float(new_alpha.stats['year_by_year'][-1]['turnover'][:-1]) <= 71.0 and (new_alpha.stats['right_corr'] < 0.81 and new_alpha.stats['left_corr'] > -0.81)):
-                        sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD, ['dmitriy.denisenko@outlook.com'], 'New potential alpha', websim.driver.current_url)
+                    if new_alpha.stats['submitted']:
+                        tags_to_set += ['submitted']
+                        sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD,
+                                            ['dmitriy.denisenko@outlook.com'], 'Submitted alpha!',
+                                            websim.driver.current_url)
+                    else:
+                        if \
+                                (new_alpha.stats['classified'] != 'INFERIOR') \
+                                        or (float(new_alpha.stats['year_by_year'][-1]['sharpe']) > 1.3
+                                            and float(new_alpha.stats['year_by_year'][-1]['turn_over'][:-1]) <= 71.0
+                                            and (new_alpha.stats['right_corr'] < 0.81 and new_alpha.stats[
+                                            'left_corr'] > -0.81)):
+                            tags_to_set += ['potential']
+                            sendemail_via_gmail(config.GMAIL_USER, config.GMAIL_PASSWORD,
+                                                ['dmitriy.denisenko@outlook.com'], 'New potential alpha',
+                                                websim.driver.current_url)
 
+                    websim.set_meta(new_alpha, tags=tags_to_set)
                     """
                     Примерно здесь можно начинать реализовывать свою логику, альфа просимулирована, статы записаны, вперёд!
                     # your code here
@@ -107,4 +128,5 @@ if __name__=="__main__":
                     begin_index = idx
 
     else:
-        print(bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance" + bcolors.ENDC)
+        print(
+            bcolors.BOLD + bcolors.WARNING + "Something went wrong, try later. Maybe service is down for maintenance" + bcolors.ENDC)

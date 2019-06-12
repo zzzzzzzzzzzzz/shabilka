@@ -176,6 +176,26 @@
     ]
   },
   {
+    "id": "2_scale_returns_rank_correlation_smooth_and_magic",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale({A})+scale({B});",
+      "z1=0.7*z*rank(ts_corr(returns,ts_delay(z,1),5))+0.2*z*rank(ts_corr(returns,ts_delay(z,120),20))+0.1*z*rank(ts_corr(returns,ts_delay(z,240),20));",
+      "(rank(z1)-0.5)^3"
+    ]
+  },
+  {
+    "id": "2_scale_returns_rank_correlation_smooth_and_magic_inner_decorr",
+    "description": "",
+    "commutate": true,
+    "template": [
+      "z=scale((rank({A})-0.5)^3)+scale((rank({B})-0.5)^3);",
+      "z1=0.7*z*rank(ts_corr(returns,ts_delay(z,1),5))+0.2*z*rank(ts_corr(returns,ts_delay(z,120),20))+0.1*z*rank(ts_corr(returns,ts_delay(z,240),20));",
+      "(rank(z1)-0.5)^3"
+    ]
+  },
+  {
     "id": "3_scale_and_cap_group_and_magic",
     "description": "",
     "commutate": true,
@@ -228,7 +248,7 @@
     "commutate": true,
     "template": [
       "rota = ebit/assets;",
-      "group_neutralize(scale({A})+scale({B}),rota+0.5)"
+      "group_neutralize(scale({A})+scale({B}),rank(rota)+0.5)"
     ]
   }
 ]

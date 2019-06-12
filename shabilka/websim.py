@@ -429,10 +429,49 @@ class WebSim(object):
 
         return alert_message
 
+    def set_meta(self, alpha, tags=[]):
+        """
+        Выставляет альфе мета теги
+        Также выставляет флаг submitted в словаре stats
+        :param alpha: объект класса Alpha.
+        :param tags: теги, str, в массиве
+        """
+        assert isinstance(alpha, basic.Alpha), 'alpha must be Alpha class instance'
+        alert_message = "Alpha is not submittable. Research more"
+        if 'result' not in self.driver.current_url:
+            alert_message = self.simulate_alpha(alpha)
+
+        resultTabPanel = self.driver.find_element_by_id('resultTabPanel')
+        tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
+        metadata_btn = tab_elements[2]
+        metadata_btn.click()
+
+        time.sleep(1)
+
+        alpha_meta_area = self.driver.find_element_by_class_name('alpha-meta')
+        meta_rows = alpha_meta_area.find_elements_by_class_name('row')
+        tags_row = meta_rows[1]
+        tags_input = tags_row.find_element_by_class_name('Select-placeholder')
+        tags_input.click()
+
+        input_action = Actions(self.driver)
+
+        for t in tags:
+            input_action.send_keys(t)
+            input_action.send_keys(Keys.SPACE)
+            input_action.send_keys(Keys.ENTER)
+
+        input_action.send_keys(Keys.ESCAPE)
+        input_action.perform()
+
+        metadata_btn.click() # убираем фокус
+
+        self.driver.find_element_by_id('save-alpha-metadata').click()
+
     def submit_alpha(self, alpha):
         """
         Сабмитит альфу
-        :param alpha: объект класса Alpha. Только что просимулированная альфа
+        :param alpha: объект класса Alpha.
         :return: True если альфа засабмитилась, False иначе.
         Также выставляет флаг submitted в словаре stats
         """
@@ -440,6 +479,14 @@ class WebSim(object):
         alert_message = "Alpha is not submittable. Research more"
         if 'result' not in self.driver.current_url:
             alert_message = self.simulate_alpha(alpha)
+
+        resultTabPanel = self.driver.find_element_by_id('resultTabPanel')
+        tab_elements = resultTabPanel.find_element_by_class_name('menu').find_elements_by_class_name('item')
+        submission_page = tab_elements[3]
+        submission_page.click()
+
+        time.sleep(1)
+
         alert_container = self.driver.find_element_by_class_name('sim-alert-container')
         if alpha.stats['submittable']:
             self.driver.find_element_by_id('submitAlphaContainer').click()

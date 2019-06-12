@@ -139,10 +139,10 @@ OPERATOR_WORDS = {
     "ts_theilsen",
     "ts_triple_corr",
     "ts_zscore",
-    "ts_regression"
+    "ts_regression",
     "convert",
-    "instpnl"
-    "||"
+    "instpnl",
+    "||",
     "|",
     "&&",
     "!",

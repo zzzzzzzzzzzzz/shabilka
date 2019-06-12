@@ -18,7 +18,7 @@ DB_NAME = 'shabilka_db'
 DB_USER = 'stuffman'
 DB_USER_PASSWORD = 'stuff'
 
-GLOBAL_LOGLEVEL = logging.INFO
+GLOBAL_LOGLEVEL = logging.DEBUG
 GLOBAL_LOGGER = logging.getLogger("websim")
 try:
     os.makedirs(LOGDIR)
